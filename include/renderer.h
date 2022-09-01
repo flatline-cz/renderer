@@ -26,7 +26,7 @@ typedef struct tRendererTile {
     // tree
     const tRendererTileHandle parent_tile;
     const tRendererTileHandle root_tile;
-    const tRendererTileHandle* children_tiles;
+    const tRendererTileHandle *children_tiles;
     unsigned children_count;
 
     // visibility
@@ -49,6 +49,7 @@ typedef struct tRendererTile {
 
 
 extern tRendererTile renderer_tiles[RENDERER_TILES_COUNT];
+extern const char *renderer_script;
 
 void renderer_init();
 
@@ -61,14 +62,13 @@ void renderer_set_position(tRendererTileHandle tile_handle,
 
 void renderer_set_color(tRendererTileHandle tile, tRendererColor color);
 
-void renderer_set_text(tRendererTileHandle tile, const char* text, unsigned length);
+void renderer_set_text(tRendererTileHandle tile, const char *text, unsigned length);
 
 void renderer_show_screen(tRendererTileHandle root_tile);
 
 void renderer_update_display(unsigned buffer);
 
 int renderer_display_ready();
-
 
 
 #endif //RENDERER_RENDERER_H

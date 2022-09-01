@@ -36,7 +36,7 @@ set(VC_TEST_SOURCES
 
 add_executable(renderer-vc
         ${VC_TEST_SOURCES}
-#        ${RENDERER_SOURCES}
+        ${RENDERER_SOURCES}
         )
 
 target_include_directories(renderer-vc PRIVATE

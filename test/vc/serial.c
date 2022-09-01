@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
+#include <memory.h>
 #include "serial.h"
 
 static char buffer[4096];
@@ -18,8 +19,9 @@ static int init_interface_Serial(const char *interface_name);
 
 
 void serial_init() {
-    sock = init_interface_Serial("/dev/ttyUSB1");
-    fcntl(sock, F_SETFL, fcntl(sock, F_GETFL) | O_NONBLOCK);
+    sock=STDERR_FILENO;
+//    sock = init_interface_Serial("/dev/ttyUSB1");
+//    fcntl(sock, F_SETFL, fcntl(sock, F_GETFL) | O_NONBLOCK);
 }
 
 bool serial_handle() {
@@ -41,23 +43,14 @@ bool serial_handle() {
         buffer_length=0;
     }
 
-
     return true;
 }
 
-void serial_send(uint8_t* data, unsigned length) {
+void serial_send(const char* data, unsigned length) {
     if(buffer_length!=0)
         return;
-    buffer_length=0;
-    buffer_position=0;
-    buffer[buffer_length++]=':';
-    while(length-- > 0) {
-        sprintf(buffer+buffer_length, "%02X", *data);
-        buffer_length+=2;
-        data++;
-    }
-    buffer[buffer_length++]=';';
-
+    buffer_length=length;
+    memcpy(buffer, data, length);
 }
 
 

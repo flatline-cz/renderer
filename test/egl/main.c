@@ -4,53 +4,25 @@
 #include "ri-constants.h"
 #include "window.h"
 #include "profile.h"
+#include "scripting.h"
 
-static bool stop=false;
-static unsigned state=0;
-static tTime next_state=0;
-
-
-static void event_loop() {
-    tTime now=time_get();
-    if(now<next_state)
-        return;
-
-    next_state=now+5000;
-
-    switch(state) {
-        case 0:
-            renderer_show_screen(RENDER_TILE_main);
-//            renderer_handle();
-            break;
-        case 1:
-            renderer_set_visibility(RENDER_TILE_main_sign2, true);
-//            renderer_handle();
-            break;
-        case 2:
-            renderer_set_position(RENDER_TILE_main_sign2, 90, 0);
-//            renderer_handle();
-            break;
-        default:
-            stop=true;
-            break;
-    }
-    state++;
-}
-
-
-void scripting_init();
-void scripting_handle();
 
 int main() {
     renderer_init();
     window_init();
     scripting_init();
 
-    while(!stop) {
-        renderer_handle();
-        scripting_handle();
-        event_loop();
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "EndlessLoop"
+    while(true) {
+        bool didSomething;
+        didSomething=renderer_handle();
+        didSomething|=scripting_handle();
+        if(didSomething)
+            continue;
+        sleep_a_bit();
     }
+#pragma clang diagnostic pop
 
     return 0;
 }
