@@ -13,7 +13,7 @@ set(ZFORTH_INCLUDES
         forth/src/zforth/
         )
 
-include(impl/CMakeLists.txt)
+include(test/impl/CMakeLists.txt)
 include(src/CMakeLists.txt)
 
 

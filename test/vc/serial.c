@@ -11,7 +11,7 @@
 #include "serial.h"
 
 static char buffer[4096];
-static unsigned buffer_length=0;
+static unsigned buffer_length = 0;
 static unsigned buffer_position;
 static int sock;
 
@@ -19,16 +19,16 @@ static int init_interface_Serial(const char *interface_name);
 
 
 void serial_init() {
-    sock=STDERR_FILENO;
-//    sock = init_interface_Serial("/dev/ttyUSB1");
-//    fcntl(sock, F_SETFL, fcntl(sock, F_GETFL) | O_NONBLOCK);
+//    sock=STDERR_FILENO;
+    sock = init_interface_Serial("/dev/ttyUSB1");
+    fcntl(sock, F_SETFL, fcntl(sock, F_GETFL) | O_NONBLOCK);
 }
 
 bool serial_handle() {
-    if(buffer_length==0)
+    if (buffer_length == 0)
         return false;
 
-    int written = (int) write(sock, buffer + buffer_position, buffer_length-buffer_position);
+    int written = (int) write(sock, buffer + buffer_position, buffer_length - buffer_position);
     if (written < 0) {
         if (errno == EWOULDBLOCK) {
             return true;
@@ -37,17 +37,17 @@ bool serial_handle() {
         exit(1);
     }
 
-    buffer_position+=written;
-    if(buffer_position==buffer_length) {
-        buffer_position=0;
-        buffer_length=0;
+    buffer_position += written;
+    if (buffer_position == buffer_length) {
+        buffer_position = 0;
+        buffer_length = 0;
     }
 
     return true;
 }
 
-void serial_send(const char* data, unsigned length) {
-    if(buffer_length!=0)
+void serial_send(const char *data, unsigned length) {
+    if (buffer_length != 0)
         return;
     buffer_length=length;
     memcpy(buffer, data, length);

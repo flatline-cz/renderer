@@ -234,7 +234,7 @@ void renderer_update_display(unsigned buffer) {
     if (root_tile == RENDERER_NULL_HANDLE)
         return;
     vc_cmd_start();
-    render_tile(buffers+buffer, root_tile);
+    render_tile(buffers + buffer, root_tile);
     vc_cmd_end_of_list();
     vc_cmd_execute(video_buffer, video_buffer_length);
     update_tile_cache(buffer);
