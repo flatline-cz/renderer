@@ -106,7 +106,7 @@ bool scripting_handle() {
     tTime now = time_get();
     if (now < idle)
         return false;
-    idle = now + 20;
+    idle = now + 100;
     zf_push((zf_cell) now);
     zf_result result = zf_eval("idle");
     if (result != ZF_OK)

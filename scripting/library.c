@@ -57,7 +57,7 @@ const char *forth_init_code =
         ": set_visibility ( tile visible -- ) 130 sys ; "
         ": set_color ( tile red green blue alpha -- ) 131 sys ; "
 
-        ": idle ( time -- ) 100 / 64 % 4 * dup 2 swap 200 swap set_position drop ; "
+        ": idle ( time -- ) 20 / 128 % 2 swap 0 0 255 set_color ; "
 
 
         ;

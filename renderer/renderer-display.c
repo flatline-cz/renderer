@@ -173,6 +173,20 @@ static void compute_area_to_redraw(tVideoBuffer *buffer,
         return;
     }
 
+    // color has changed?
+    if (cache->color.blue != tile->color.blue
+        || cache->color.green != tile->color.green
+        || cache->color.red != tile->color.red
+        || cache->color.alpha != tile->color.alpha) {
+        // redraw current rectangle
+        list->count = 1;
+        list->area[0].x1 = tile->position_left;
+        list->area[0].x2 = tile->position_right;
+        list->area[0].y1 = tile->position_top;
+        list->area[0].y2 = tile->position_bottom;
+        return;
+    }
+
     // TODO: check other changes (texture, etc)
 
     // no changes
@@ -212,6 +226,8 @@ static void render_tile(tVideoBuffer *buffer, tRendererTileHandle tile_handle) {
     tRendererTile *tile = renderer_tiles + tile_handle;
 
     // compute redraw areas
+    list.count = 0;
+//    if(tile_handle)
     compute_area_to_redraw(buffer, tile, tile_handle, &list);
 
     if (list.count != 0) {
