@@ -226,8 +226,6 @@ static void render_tile(tVideoBuffer *buffer, tRendererTileHandle tile_handle) {
     tRendererTile *tile = renderer_tiles + tile_handle;
 
     // compute redraw areas
-    list.count = 0;
-//    if(tile_handle)
     compute_area_to_redraw(buffer, tile, tile_handle, &list);
 
     if (list.count != 0) {
@@ -280,13 +278,14 @@ static bool vc_cmd_rect_color(tRendererPosition left,
 
     video_buffer[video_buffer_length++] = 0x00;
     video_buffer[video_buffer_length++] = left & 0xff;
-    video_buffer[video_buffer_length++] = left >> 8;
     video_buffer[video_buffer_length++] = top & 0xff;
-    video_buffer[video_buffer_length++] = top >> 8;
     video_buffer[video_buffer_length++] = width & 0xff;
-    video_buffer[video_buffer_length++] = width >> 8;
     video_buffer[video_buffer_length++] = height & 0xff;
-    video_buffer[video_buffer_length++] = height >> 8;
+    video_buffer[video_buffer_length++] =
+            ((left >> 8) & 3)
+            | (((top >> 8) & 3) << 2)
+            | (((width >> 8) & 3) << 4)
+            | (((height >> 8) & 3) << 6);
 
     uint8_t red = ((color.red) >> 3) & 0x1f;
     uint8_t green = ((color.green) >> 3) & 0x1f;
@@ -296,6 +295,11 @@ static bool vc_cmd_rect_color(tRendererPosition left,
     video_buffer[video_buffer_length++] = red | ((green << 5) & 0xe0);
     video_buffer[video_buffer_length++] = ((green >> 3) & 0x03) | (blue << 2);
     video_buffer[video_buffer_length++] = alpha;
+
+    video_buffer[video_buffer_length++] = 0;
+    video_buffer[video_buffer_length++] = 0;
+    video_buffer[video_buffer_length++] = 0;
+    video_buffer[video_buffer_length++] = 0;
 
     return true;
 }

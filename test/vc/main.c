@@ -53,8 +53,8 @@ bool vc_cmd_execute(const uint8_t *data, unsigned length) {
     if (length == 1 && data[0] == 0x80)
         return false;
 
-    stream_dump_bytes(data, length);
-    stream_dump(data, length);
+//    stream_dump_bytes(data, length);
+//    stream_dump(data, length);
 
     unsigned position = 0;
     unsigned original_length = length;
@@ -77,7 +77,7 @@ bool vc_cmd_execute(const uint8_t *data, unsigned length) {
     serial_buffer[position++] = ';';
     serial_buffer[position++] = '\n';
 
-    fwrite(serial_buffer, 1, position, stderr);
+//    fwrite(serial_buffer, 1, position, stderr);
 
     serial_send(serial_buffer, position);
 
@@ -89,15 +89,13 @@ static int counter = 0;
 static bool active_buffer = true;
 static tTime swap_buffers = 0;
 
-int renderer_display_ready() {
-    tTime now = time_get();
-    if (now < swap_buffers)
-        return -1;
-    counter++;
-    swap_buffers = now + (counter>10 ? 100:500);
+extern uint8_t status_byte;
 
-    active_buffer = !active_buffer;
-    return active_buffer ? 1 : 0;
+int renderer_display_ready() {
+    if(status_byte=='0')
+        return -1;
+    status_byte=0;
+    return 0;
 }
 
 int main() {

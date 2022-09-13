@@ -24,7 +24,12 @@ void serial_init() {
     fcntl(sock, F_SETFL, fcntl(sock, F_GETFL) | O_NONBLOCK);
 }
 
+uint8_t status_byte;
+
 bool serial_handle() {
+
+    int bytes=(int)read(sock, &status_byte, 1);
+
     if (buffer_length == 0)
         return false;
 
