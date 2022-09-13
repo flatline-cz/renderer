@@ -4,7 +4,7 @@
 #define RENDERER_TILES_COUNT                                             3
 
 #define RENDER_TILE_main                                                 0
-#define RENDER_TILE_main_sign1                                           1
-#define RENDER_TILE_main_sign2                                           2
+#define RENDER_TILE_main_rect1                                           1
+#define RENDER_TILE_main_rect1-1                                         2
 
 #endif
