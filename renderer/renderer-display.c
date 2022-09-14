@@ -244,14 +244,16 @@ static void render_tile(tVideoBuffer *buffer, tRendererTileHandle tile_handle) {
 
 }
 
-void renderer_update_display(unsigned buffer) {
+bool renderer_update_display(unsigned buffer) {
     if (root_tile == RENDERER_NULL_HANDLE)
-        return;
+        return false;
     vc_cmd_start();
     render_tile(buffers + buffer, root_tile);
     vc_cmd_end_of_list();
-    vc_cmd_execute(video_buffer, video_buffer_length);
+    if(!vc_cmd_execute(video_buffer, video_buffer_length))
+        return false;
     update_tile_cache(buffer);
+    return true;
 }
 
 
@@ -290,7 +292,7 @@ static bool vc_cmd_rect_color(tRendererPosition left,
     uint8_t red = ((color.red) >> 3) & 0x1f;
     uint8_t green = ((color.green) >> 3) & 0x1f;
     uint8_t blue = ((color.blue) >> 3) & 0x1f;
-    uint8_t alpha = ((color.alpha) >> 4) & 0x0f;
+    uint8_t alpha = ((color.alpha) >> 3) & 0x1f;
 
     video_buffer[video_buffer_length++] = red | ((green << 5) & 0xe0);
     video_buffer[video_buffer_length++] = ((green >> 3) & 0x03) | (blue << 2);

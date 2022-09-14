@@ -66,7 +66,7 @@ void renderer_set_text(tRendererTileHandle tile, const char *text, unsigned leng
 
 void renderer_show_screen(tRendererTileHandle root_tile);
 
-void renderer_update_display(unsigned buffer);
+bool renderer_update_display(unsigned buffer);
 
 int renderer_display_ready();
 

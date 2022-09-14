@@ -13,8 +13,7 @@ bool renderer_handle() {
     if (buffer < 0)
         return false;
 
-    renderer_update_display(buffer);
-    return true;
+    return renderer_update_display(buffer);
 }
 
 static void propagate_visibility(tRendererTileHandle tile, bool visible) {
