@@ -92,13 +92,14 @@ static tTime swap_buffers = 0;
 extern uint8_t status_byte;
 
 int renderer_display_ready() {
-    if(status_byte=='0')
+    if(status_byte!='2')
         return -1;
     status_byte=0;
     return 0;
 }
 
 int main() {
+    time_init();
     serial_init();
     renderer_init();
     scripting_init();

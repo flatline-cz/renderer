@@ -43,6 +43,13 @@ static bool vc_cmd_rect_color(tRendererPosition left,
                               tRendererPosition height,
                               tRendererColor color);
 
+static bool vc_cmd_rect_texture(tRendererPosition left,
+                              tRendererPosition top,
+                              tRendererPosition width,
+                              tRendererPosition height,
+                              tRendererColor color,
+                              uint32_t texture_base);
+
 void renderer_show_screen(tRendererTileHandle tile) {
     if (root_tile != tile) {
         root_tile = tile;
@@ -208,7 +215,7 @@ static void redraw_tile(tVideoBuffer *buffer, tRendererTile *tile, tRectangle *b
     tRendererPosition y2 = (tile->position_bottom > bounding_box->y2) ? bounding_box->y2 : tile->position_bottom;
 
     // render color rectangle
-    vc_cmd_rect_color(x1, y1, x2 + 1 - x1, y2 + 1 - y1, tile->color);
+    vc_cmd_rect_texture(x1, y1, x2 + 1 - x1, y2 + 1 - y1, tile->color, tile->texture_base);
 
     // render all children
     unsigned i;
@@ -262,46 +269,65 @@ static void update_tile_cache(unsigned buffer) {
     buffers[buffer].not_rendered_at_all = false;
 }
 
-static bool vc_cmd_rect_color(tRendererPosition left,
+static bool vc_cmd_rect_common(tRendererPosition left,
                               tRendererPosition top,
                               tRendererPosition width,
                               tRendererPosition height,
                               tRendererColor color) {
-    // command parameters alignment is:
-    // cmd:     1 byte
-    // left:    2 bytes (LSB first)
-    // top:     2 bytes (LSB first)
-    // width:   2 bytes (LSB first)
-    // height:  2 bytes (LSB first)
-    // color:   3 bytes (special encoding)
-    // === total: 12 byte ===
     if (video_buffer_length + 12 >= VIDEOCODE_BUFFER_SIZE)
         return false;
 
     video_buffer[video_buffer_length++] = 0x00;
     video_buffer[video_buffer_length++] = left & 0xff;
     video_buffer[video_buffer_length++] = top & 0xff;
-    video_buffer[video_buffer_length++] = width & 0xff;
-    video_buffer[video_buffer_length++] = height & 0xff;
+    video_buffer[video_buffer_length++] = (left+width-1) & 0xff;
+    video_buffer[video_buffer_length++] = (top+height-1) & 0xff;
     video_buffer[video_buffer_length++] =
             ((left >> 8) & 3)
             | (((top >> 8) & 3) << 2)
-            | (((width >> 8) & 3) << 4)
-            | (((height >> 8) & 3) << 6);
+            | ((((left+width-1) >> 8) & 3) << 4)
+            | ((((top+height-1) >> 8) & 3) << 6);
 
-    uint8_t red = ((color.red) >> 3) & 0x1f;
-    uint8_t green = ((color.green) >> 3) & 0x1f;
-    uint8_t blue = ((color.blue) >> 3) & 0x1f;
-    uint8_t alpha = ((color.alpha) >> 3) & 0x1f;
+    uint8_t red = ((color.red) >> 4) & 0x0f;
+    uint8_t green = ((color.green) >> 4) & 0x0f;
+    uint8_t blue = ((color.blue) >> 4) & 0x0f;
+    uint8_t alpha = ((color.alpha) >> 4) & 0x0f;
 
-    video_buffer[video_buffer_length++] = red | ((green << 5) & 0xe0);
-    video_buffer[video_buffer_length++] = ((green >> 3) & 0x03) | (blue << 2);
-    video_buffer[video_buffer_length++] = alpha;
+    video_buffer[video_buffer_length++] = red | (green << 4);
+    video_buffer[video_buffer_length++] = blue | (alpha << 4);
+
+    return true;
+}
+
+static bool vc_cmd_rect_color(tRendererPosition left,
+                              tRendererPosition top,
+                              tRendererPosition width,
+                              tRendererPosition height,
+                              tRendererColor color) {
+    if(!vc_cmd_rect_common(left, top, width, height, color))
+        return false;
 
     video_buffer[video_buffer_length++] = 0;
     video_buffer[video_buffer_length++] = 0;
     video_buffer[video_buffer_length++] = 0;
     video_buffer[video_buffer_length++] = 0;
+
+    return true;
+}
+
+static bool vc_cmd_rect_texture(tRendererPosition left,
+                              tRendererPosition top,
+                              tRendererPosition width,
+                              tRendererPosition height,
+                              tRendererColor color,
+                              uint32_t texture_base) {
+    if(!vc_cmd_rect_common(left, top, width, height, color))
+        return false;
+
+    video_buffer[video_buffer_length++] = (texture_base & 0xff);
+    video_buffer[video_buffer_length++] = (texture_base >> 8) & 0xff;
+    video_buffer[video_buffer_length++] = (texture_base >> 16) & 0xff;
+    video_buffer[video_buffer_length++] = (texture_base >> 24) & 0xff;
 
     return true;
 }

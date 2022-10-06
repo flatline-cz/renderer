@@ -44,6 +44,9 @@ typedef struct tRendererTile {
     // color
     tRendererColor color;
 
+    // texture position
+    uint32_t texture_base;
+
 
 } tRendererTile;
 

@@ -107,10 +107,19 @@ bool scripting_handle() {
     if (now < idle)
         return false;
     idle = now + 100;
-    zf_push((zf_cell) now);
-    zf_result result = zf_eval("idle");
-    if (result != ZF_OK)
-        fprintf(stderr, "Forth failure %d\n", result);
+//    zf_push((zf_cell) now);
+//    zf_result result = zf_eval("idle");
+//    if (result != ZF_OK)
+//        fprintf(stderr, "Forth failure %d\n", result);
+
+    if(now > 2500) {
+        tRendererColor color={.alpha=0xff, .green=0x60, .red=0x60, .blue=0x60 };
+        renderer_set_color(RENDER_TILE_main_sign_abs, color);
+        renderer_set_color(RENDER_TILE_main_sign_steering, color);
+    }
+
+    renderer_set_visibility(RENDER_TILE_main_sign_turn_left, (now/1000)&1);
+
     return true;
 
 }
