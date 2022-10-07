@@ -70,12 +70,14 @@ typedef struct tRendererFontGlyph {
     uint16_t height;
     int16_t offset_x;
     int16_t offset_y;
+    uint16_t advance_x;
     tRendererTexture texture;
 } tRendererFontGlyph;
 
 typedef struct tRendererFont {
     uint16_t glyph_count;
     tRendererFontGlyph *glyphs;
+    uint16_t space_width;
 } tRendererFont;
 
 typedef enum eRendererHAlignment {
@@ -112,7 +114,7 @@ void renderer_set_position(tRendererTileHandle tile_handle,
 
 void renderer_set_color(tRendererTileHandle tile, tRendererColor color);
 
-void renderer_set_text(tRendererTileHandle tile, const char *text, unsigned length);
+void renderer_set_text(tRendererTileHandle tile, const char *text);
 
 void renderer_show_screen(tRendererTileHandle root_tile);
 

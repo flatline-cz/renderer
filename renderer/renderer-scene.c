@@ -45,7 +45,28 @@ void renderer_set_color(tRendererTileHandle tile, tRendererColor color) {
     renderer_tiles[tile].color = color;
 }
 
-void renderer_set_text(tRendererTileHandle tile_handle, const char *text, unsigned length) {
+static const uint32_t offsetsFromUTF8[6] = {
+        0x00000000UL, 0x00003080UL, 0x000E2080UL,
+        0x03C82080UL, 0xFA082080UL, 0x82082080UL
+};
+#define isutf(c) (((c)&0xC0)!=0x80)
+
+static uint32_t utf_nextchar(const char *s, unsigned *i)
+{
+    uint32_t ch = 0;
+    int sz = 0;
+
+    do {
+        ch <<= 6;
+        ch += (unsigned char)s[(*i)++];
+        sz++;
+    } while (s[*i] && !isutf(s[*i]));
+    ch -= offsetsFromUTF8[sz-1];
+
+    return ch;
+}
+
+void renderer_set_text(tRendererTileHandle tile_handle, const char *text) {
 
     // find text definition
     tRendererText *text_definition = renderer_texts + tile_handle;
@@ -53,19 +74,27 @@ void renderer_set_text(tRendererTileHandle tile_handle, const char *text, unsign
     // layout all characters
     unsigned character_index = 0;
     tRendererPosition x = 0;
-    while (*text && character_index < length && character_index < text_definition->tile_count) {
+    while (*text && character_index < text_definition->tile_count) {
         // extract code point
-        uint16_t code_point = (unsigned char) *(text++); // FIXME -> UTF8
+        unsigned i=0;
+        uint32_t code_point = utf_nextchar(text, &i);
+        text+=i;
+
+        // space?
+        if (code_point == ' ') {
+            x += text_definition->font->space_width;
+            continue;
+        }
 
         // find glyph
         tRendererFontGlyph *glyph;
-        unsigned i;
         for (glyph = text_definition->font->glyphs, i = text_definition->font->glyph_count; i > 0; i--, glyph++) {
             if (glyph->code_point == code_point)
                 break;
         }
         if (i == 0) {
-            // FIXME: unknown code point
+            // unknown code point -> show space
+            x+=text_definition->font->space_width;
             continue;
         }
 
@@ -73,14 +102,14 @@ void renderer_set_text(tRendererTileHandle tile_handle, const char *text, unsign
         tRendererTile *tile = renderer_tiles + text_definition->tile[character_index];
         tile->tile_visible = true;
         tile->position_top = text_definition->position_y + glyph->offset_y;
-        tile->position_left = x;
+        tile->position_left = x + glyph->offset_x;
         tile->position_width = glyph->width;
         tile->position_height = glyph->height;
         tile->position_right = tile->position_left + tile->position_width - 1;
         tile->position_bottom = tile->position_top + tile->position_height - 1;
         tile->texture.texture_base = glyph->texture.texture_base;
 
-        x += tile->position_width + 2;
+        x += glyph->advance_x;
 
         character_index++;
     }
@@ -92,6 +121,10 @@ void renderer_set_text(tRendererTileHandle tile_handle, const char *text, unsign
 
     // update X position
     tRendererPosition deltaX = text_definition->position_x;
+    if (text_definition->alignment_h == TEXT_RIGHT)
+        deltaX -= x;
+    if (text_definition->alignment_h == TEXT_CENTER)
+        deltaX -= x / 2;
     for (character_index = 0; character_index < text_definition->tile_count; character_index++) {
         tRendererTile *tile = renderer_tiles + text_definition->tile[character_index];
         tile->position_left += deltaX;

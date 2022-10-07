@@ -48,7 +48,9 @@ static bool vc_cmd_rect_texture(tRendererPosition left,
                                 tRendererPosition width,
                                 tRendererPosition height,
                                 tRendererColor color,
-                                uint32_t texture_base);
+                                tRendererTexture *texture,
+                                tRendererPosition texture_left,
+                                tRendererPosition texture_top);
 
 void renderer_show_screen(tRendererTileHandle tile) {
     if (root_tile != tile) {
@@ -217,7 +219,10 @@ static void redraw_tile(tVideoBuffer *buffer, tRendererTile *tile, tRectangle *b
     switch (tile->rendering_mode) {
         case ALPHA_TEXTURE:
             vc_cmd_rect_texture(x1, y1, x2 + 1 - x1, y2 + 1 - y1,
-                                tile->color, tile->texture.texture_base);
+                                tile->color,
+                                &tile->texture,
+                                x1-tile->position_left,
+                                y1-tile->position_top);
             break;
         case COLOR:
         default:
@@ -328,9 +333,15 @@ static bool vc_cmd_rect_texture(tRendererPosition left,
                                 tRendererPosition width,
                                 tRendererPosition height,
                                 tRendererColor color,
-                                uint32_t texture_base) {
+                                tRendererTexture *texture,
+                                tRendererPosition texture_left,
+                                tRendererPosition texture_top) {
     if (!vc_cmd_rect_common(left, top, width, height, color))
         return false;
+
+    uint32_t texture_base=texture->texture_base;
+    texture_base+=texture_left;
+    texture_base+=texture_top*1024;
 
     video_buffer[video_buffer_length++] = (texture_base & 0xff);
     video_buffer[video_buffer_length++] = (texture_base >> 8) & 0xff;

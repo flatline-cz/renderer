@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <string.h>
 #include "zforth.h"
 #include "profile.h"
 #include "scripting.h"
@@ -115,12 +116,27 @@ bool scripting_handle() {
     if(now > 2500) {
         tRendererColor color={.alpha=0xff, .green=0x60, .red=0x60, .blue=0x60 };
         renderer_set_color(RENDER_TILE_main_sign_abs, color);
-        renderer_set_color(RENDER_TILE_main_sign_steering, color);
+//        renderer_set_color(RENDER_TILE_main_sign_steering, color);
     }
 
-    char temp[4];
+    char temp[10];
     sprintf(temp, "%03d", (now/100)%1000);
-    renderer_set_text(0, temp, 3);
+    renderer_set_text(0, temp);
+
+    switch((now/2000)%3 + 1) {
+        case 1:
+            renderer_set_text(1, "One");
+            break;
+        case 2:
+            renderer_set_text(1, "Two");
+            break;
+        case 3:
+            renderer_set_text(1,"Three");
+            break;
+        default:
+            renderer_set_text(1, "----");
+            break;
+    }
 
     renderer_set_visibility(RENDER_TILE_main_sign_turn_left, (now/1000)&1);
 
