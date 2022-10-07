@@ -44,11 +44,11 @@ static bool vc_cmd_rect_color(tRendererPosition left,
                               tRendererColor color);
 
 static bool vc_cmd_rect_texture(tRendererPosition left,
-                              tRendererPosition top,
-                              tRendererPosition width,
-                              tRendererPosition height,
-                              tRendererColor color,
-                              uint32_t texture_base);
+                                tRendererPosition top,
+                                tRendererPosition width,
+                                tRendererPosition height,
+                                tRendererColor color,
+                                uint32_t texture_base);
 
 void renderer_show_screen(tRendererTileHandle tile) {
     if (root_tile != tile) {
@@ -180,11 +180,12 @@ static void compute_area_to_redraw(tVideoBuffer *buffer,
         return;
     }
 
-    // color has changed?
+    // color or texture has changed?
     if (cache->color.blue != tile->color.blue
         || cache->color.green != tile->color.green
         || cache->color.red != tile->color.red
-        || cache->color.alpha != tile->color.alpha) {
+        || cache->color.alpha != tile->color.alpha
+        || cache->texture.texture_base != tile->texture.texture_base) {
         // redraw current rectangle
         list->count = 1;
         list->area[0].x1 = tile->position_left;
@@ -193,8 +194,6 @@ static void compute_area_to_redraw(tVideoBuffer *buffer,
         list->area[0].y2 = tile->position_bottom;
         return;
     }
-
-    // TODO: check other changes (texture, etc)
 
     // no changes
     list->count = 0;
@@ -215,7 +214,16 @@ static void redraw_tile(tVideoBuffer *buffer, tRendererTile *tile, tRectangle *b
     tRendererPosition y2 = (tile->position_bottom > bounding_box->y2) ? bounding_box->y2 : tile->position_bottom;
 
     // render color rectangle
-    vc_cmd_rect_texture(x1, y1, x2 + 1 - x1, y2 + 1 - y1, tile->color, tile->texture_base);
+    switch (tile->rendering_mode) {
+        case ALPHA_TEXTURE:
+            vc_cmd_rect_texture(x1, y1, x2 + 1 - x1, y2 + 1 - y1,
+                                tile->color, tile->texture.texture_base);
+            break;
+        case COLOR:
+        default:
+            vc_cmd_rect_color(x1, y1, x2 + 1 - x1, y2 + 1 - y1, tile->color);
+            break;
+    }
 
     // render all children
     unsigned i;
@@ -257,7 +265,7 @@ bool renderer_update_display(unsigned buffer) {
     vc_cmd_start();
     render_tile(buffers + buffer, root_tile);
     vc_cmd_end_of_list();
-    if(!vc_cmd_execute(video_buffer, video_buffer_length))
+    if (!vc_cmd_execute(video_buffer, video_buffer_length))
         return false;
     update_tile_cache(buffer);
     return true;
@@ -270,23 +278,23 @@ static void update_tile_cache(unsigned buffer) {
 }
 
 static bool vc_cmd_rect_common(tRendererPosition left,
-                              tRendererPosition top,
-                              tRendererPosition width,
-                              tRendererPosition height,
-                              tRendererColor color) {
+                               tRendererPosition top,
+                               tRendererPosition width,
+                               tRendererPosition height,
+                               tRendererColor color) {
     if (video_buffer_length + 12 >= VIDEOCODE_BUFFER_SIZE)
         return false;
 
     video_buffer[video_buffer_length++] = 0x00;
     video_buffer[video_buffer_length++] = left & 0xff;
     video_buffer[video_buffer_length++] = top & 0xff;
-    video_buffer[video_buffer_length++] = (left+width-1) & 0xff;
-    video_buffer[video_buffer_length++] = (top+height-1) & 0xff;
+    video_buffer[video_buffer_length++] = (left + width - 1) & 0xff;
+    video_buffer[video_buffer_length++] = (top + height - 1) & 0xff;
     video_buffer[video_buffer_length++] =
             ((left >> 8) & 3)
             | (((top >> 8) & 3) << 2)
-            | ((((left+width-1) >> 8) & 3) << 4)
-            | ((((top+height-1) >> 8) & 3) << 6);
+            | ((((left + width - 1) >> 8) & 3) << 4)
+            | ((((top + height - 1) >> 8) & 3) << 6);
 
     uint8_t red = ((color.red) >> 4) & 0x0f;
     uint8_t green = ((color.green) >> 4) & 0x0f;
@@ -304,7 +312,7 @@ static bool vc_cmd_rect_color(tRendererPosition left,
                               tRendererPosition width,
                               tRendererPosition height,
                               tRendererColor color) {
-    if(!vc_cmd_rect_common(left, top, width, height, color))
+    if (!vc_cmd_rect_common(left, top, width, height, color))
         return false;
 
     video_buffer[video_buffer_length++] = 0;
@@ -316,12 +324,12 @@ static bool vc_cmd_rect_color(tRendererPosition left,
 }
 
 static bool vc_cmd_rect_texture(tRendererPosition left,
-                              tRendererPosition top,
-                              tRendererPosition width,
-                              tRendererPosition height,
-                              tRendererColor color,
-                              uint32_t texture_base) {
-    if(!vc_cmd_rect_common(left, top, width, height, color))
+                                tRendererPosition top,
+                                tRendererPosition width,
+                                tRendererPosition height,
+                                tRendererColor color,
+                                uint32_t texture_base) {
+    if (!vc_cmd_rect_common(left, top, width, height, color))
         return false;
 
     video_buffer[video_buffer_length++] = (texture_base & 0xff);

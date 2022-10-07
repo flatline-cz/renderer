@@ -1,19 +1,23 @@
-#include <stdlib.h>
-#include "ri-constants.h"
 #include "renderer.h"
+#include "ri-constants.h"
+#include <stdlib.h>
 
-static const tRendererTileHandle tile_0_children[1] = { 1 };
+// children
+static const tRendererTileHandle tile_0_children[2] = { 1, 6 };
 static const tRendererTileHandle tile_1_children[4] = { 2, 3, 4, 5 };
+static const tRendererTileHandle tile_6_children[10] = { 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 };
 
+// tiles
 tRendererTile renderer_tiles[RENDERER_TILES_COUNT] = {
     {
         .parent_tile = RENDERER_NULL_HANDLE, .root_tile = 0,
-        .children_tiles = tile_0_children, .children_count = 1,
+        .children_tiles = tile_0_children, .children_count = 2,
         .tile_visible = true, .parent_visible = true,
         .position_left = 0, .position_right = 1023,
         .position_top = 0, .position_bottom = 599,
         .position_width = 1024, .position_height = 600,
         .color = { .red = 0xFF, .green = 0xFF, .blue = 0xFF, .alpha = 0xFF },
+        .rendering_mode = COLOR,
     },
     {
         .parent_tile = 0, .root_tile = 0,
@@ -23,6 +27,7 @@ tRendererTile renderer_tiles[RENDERER_TILES_COUNT] = {
         .position_top = 100, .position_bottom = 199,
         .position_width = 300, .position_height = 100,
         .color = { .red = 0x00, .green = 0x00, .blue = 0x00, .alpha = 0xFF },
+        .rendering_mode = COLOR,
     },
     {
         .parent_tile = 1, .root_tile = 0,
@@ -32,8 +37,8 @@ tRendererTile renderer_tiles[RENDERER_TILES_COUNT] = {
         .position_top = 120, .position_bottom = 151,
         .position_width = 32, .position_height = 32,
         .color = { .red = 0x00, .green = 0xFF, .blue = 0x7F, .alpha = 0xFF },
- // tx = 96, ty = 0
-        .texture_base = 0x80000060
+        .rendering_mode = ALPHA_TEXTURE,
+        .texture = { .texture_base = 0x80000060 }
     },
     {
         .parent_tile = 1, .root_tile = 0,
@@ -43,8 +48,8 @@ tRendererTile renderer_tiles[RENDERER_TILES_COUNT] = {
         .position_top = 155, .position_bottom = 186,
         .position_width = 32, .position_height = 32,
         .color = { .red = 0xFF, .green = 0x00, .blue = 0x33, .alpha = 0xFF },
- // tx = 64, ty = 0
-        .texture_base = 0x80000040
+        .rendering_mode = ALPHA_TEXTURE,
+        .texture = { .texture_base = 0x80000040 }
     },
     {
         .parent_tile = 1, .root_tile = 0,
@@ -54,8 +59,8 @@ tRendererTile renderer_tiles[RENDERER_TILES_COUNT] = {
         .position_top = 120, .position_bottom = 151,
         .position_width = 32, .position_height = 32,
         .color = { .red = 0x00, .green = 0xFF, .blue = 0x7F, .alpha = 0xFF },
- // tx = 0, ty = 0
-        .texture_base = 0x80000000
+        .rendering_mode = ALPHA_TEXTURE,
+        .texture = { .texture_base = 0x80000000 }
     },
     {
         .parent_tile = 1, .root_tile = 0,
@@ -65,8 +70,119 @@ tRendererTile renderer_tiles[RENDERER_TILES_COUNT] = {
         .position_top = 155, .position_bottom = 186,
         .position_width = 32, .position_height = 32,
         .color = { .red = 0xFF, .green = 0xA5, .blue = 0x00, .alpha = 0xFF },
- // tx = 32, ty = 0
-        .texture_base = 0x80000020
+        .rendering_mode = ALPHA_TEXTURE,
+        .texture = { .texture_base = 0x80000020 }
+    },
+    {
+        .parent_tile = 0, .root_tile = 0,
+        .children_tiles = tile_6_children, .children_count = 10,
+        .tile_visible = true, .parent_visible = true,
+        .position_left = 100, .position_right = 199,
+        .position_top = 250, .position_bottom = 349,
+        .position_width = 100, .position_height = 100,
+        .color = { .red = 0x00, .green = 0x00, .blue = 0x00, .alpha = 0xFF },
+        .rendering_mode = COLOR,
+    },
+    {
+        .parent_tile = 6, .root_tile = 0,
+        .children_tiles = NULL, .children_count = 0,
+        .tile_visible = false, .parent_visible = true,
+        .position_left = 0, .position_right = -1,
+        .position_top = 0, .position_bottom = -1,
+        .position_width = 0, .position_height = 0,
+        .color = { .red = 0x00, .green = 0xFF, .blue = 0x7F, .alpha = 0xFF },
+        .rendering_mode = ALPHA_TEXTURE,
+    },
+    {
+        .parent_tile = 6, .root_tile = 0,
+        .children_tiles = NULL, .children_count = 0,
+        .tile_visible = false, .parent_visible = true,
+        .position_left = 0, .position_right = -1,
+        .position_top = 0, .position_bottom = -1,
+        .position_width = 0, .position_height = 0,
+        .color = { .red = 0x00, .green = 0xFF, .blue = 0x7F, .alpha = 0xFF },
+        .rendering_mode = ALPHA_TEXTURE,
+    },
+    {
+        .parent_tile = 6, .root_tile = 0,
+        .children_tiles = NULL, .children_count = 0,
+        .tile_visible = false, .parent_visible = true,
+        .position_left = 0, .position_right = -1,
+        .position_top = 0, .position_bottom = -1,
+        .position_width = 0, .position_height = 0,
+        .color = { .red = 0x00, .green = 0xFF, .blue = 0x7F, .alpha = 0xFF },
+        .rendering_mode = ALPHA_TEXTURE,
+    },
+    {
+        .parent_tile = 6, .root_tile = 0,
+        .children_tiles = NULL, .children_count = 0,
+        .tile_visible = false, .parent_visible = true,
+        .position_left = 0, .position_right = -1,
+        .position_top = 0, .position_bottom = -1,
+        .position_width = 0, .position_height = 0,
+        .color = { .red = 0x00, .green = 0xFF, .blue = 0x7F, .alpha = 0xFF },
+        .rendering_mode = ALPHA_TEXTURE,
+    },
+    {
+        .parent_tile = 6, .root_tile = 0,
+        .children_tiles = NULL, .children_count = 0,
+        .tile_visible = false, .parent_visible = true,
+        .position_left = 0, .position_right = -1,
+        .position_top = 0, .position_bottom = -1,
+        .position_width = 0, .position_height = 0,
+        .color = { .red = 0x00, .green = 0xFF, .blue = 0x7F, .alpha = 0xFF },
+        .rendering_mode = ALPHA_TEXTURE,
+    },
+    {
+        .parent_tile = 6, .root_tile = 0,
+        .children_tiles = NULL, .children_count = 0,
+        .tile_visible = false, .parent_visible = true,
+        .position_left = 0, .position_right = -1,
+        .position_top = 0, .position_bottom = -1,
+        .position_width = 0, .position_height = 0,
+        .color = { .red = 0x00, .green = 0xFF, .blue = 0x7F, .alpha = 0xFF },
+        .rendering_mode = ALPHA_TEXTURE,
+    },
+    {
+        .parent_tile = 6, .root_tile = 0,
+        .children_tiles = NULL, .children_count = 0,
+        .tile_visible = false, .parent_visible = true,
+        .position_left = 0, .position_right = -1,
+        .position_top = 0, .position_bottom = -1,
+        .position_width = 0, .position_height = 0,
+        .color = { .red = 0x00, .green = 0xFF, .blue = 0x7F, .alpha = 0xFF },
+        .rendering_mode = ALPHA_TEXTURE,
+    },
+    {
+        .parent_tile = 6, .root_tile = 0,
+        .children_tiles = NULL, .children_count = 0,
+        .tile_visible = false, .parent_visible = true,
+        .position_left = 0, .position_right = -1,
+        .position_top = 0, .position_bottom = -1,
+        .position_width = 0, .position_height = 0,
+        .color = { .red = 0x00, .green = 0xFF, .blue = 0x7F, .alpha = 0xFF },
+        .rendering_mode = ALPHA_TEXTURE,
+    },
+    {
+        .parent_tile = 6, .root_tile = 0,
+        .children_tiles = NULL, .children_count = 0,
+        .tile_visible = false, .parent_visible = true,
+        .position_left = 0, .position_right = -1,
+        .position_top = 0, .position_bottom = -1,
+        .position_width = 0, .position_height = 0,
+        .color = { .red = 0x00, .green = 0xFF, .blue = 0x7F, .alpha = 0xFF },
+        .rendering_mode = ALPHA_TEXTURE,
+    },
+    {
+        .parent_tile = 6, .root_tile = 0,
+        .children_tiles = NULL, .children_count = 0,
+        .tile_visible = false, .parent_visible = true,
+        .position_left = 0, .position_right = -1,
+        .position_top = 0, .position_bottom = -1,
+        .position_width = 0, .position_height = 0,
+        .color = { .red = 0x00, .green = 0xFF, .blue = 0x7F, .alpha = 0xFF },
+        .rendering_mode = ALPHA_TEXTURE,
     },
 };
+
 

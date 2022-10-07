@@ -118,6 +118,10 @@ bool scripting_handle() {
         renderer_set_color(RENDER_TILE_main_sign_steering, color);
     }
 
+    char temp[4];
+    sprintf(temp, "%03d", (now/100)%1000);
+    renderer_set_text(0, temp, 3);
+
     renderer_set_visibility(RENDER_TILE_main_sign_turn_left, (now/1000)&1);
 
     return true;

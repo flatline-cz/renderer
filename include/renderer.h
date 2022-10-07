@@ -21,6 +21,16 @@ typedef struct tRendererColor {
     unsigned alpha: 8;
 } tRendererColor;
 
+typedef enum eRendererTileMode {
+    COLOR,
+    ALPHA_TEXTURE,
+    ABGR_TEXTURE
+} eRendererTileMode;
+
+typedef struct tRendererTexture {
+    // TODO: make better
+    uint32_t texture_base;
+} tRendererTexture;
 
 typedef struct tRendererTile {
     // tree
@@ -41,17 +51,54 @@ typedef struct tRendererTile {
     tRendererPosition position_width;
     tRendererPosition position_height;
 
+    // rendering mode
+    eRendererTileMode rendering_mode;
+
     // color
     tRendererColor color;
 
-    // texture position
-    uint32_t texture_base;
-
+    // texture
+    tRendererTexture texture;
 
 } tRendererTile;
 
-
 extern tRendererTile renderer_tiles[RENDERER_TILES_COUNT];
+
+typedef struct tRendererFontGlyph {
+    uint16_t code_point;
+    uint16_t width;
+    uint16_t height;
+    int16_t offset_x;
+    int16_t offset_y;
+    tRendererTexture texture;
+} tRendererFontGlyph;
+
+typedef struct tRendererFont {
+    uint16_t glyph_count;
+    tRendererFontGlyph *glyphs;
+} tRendererFont;
+
+typedef enum eRendererHAlignment {
+    TEXT_LEFT, TEXT_CENTER, TEXT_RIGHT
+} eRendererHAlignment;
+
+typedef enum eRendererVAlignment {
+    TEXT_TOP, TEXT_MIDDLE, TEXT_BOTTOM
+} eRendererVAlignment;
+
+typedef struct tRendererText {
+    uint16_t tile_count;
+    tRendererTileHandle * tile;
+    tRendererFont *font;
+    tRendererPosition position_x;
+    tRendererPosition position_y;
+    eRendererHAlignment alignment_h;
+    eRendererVAlignment alignment_v;
+    uint16_t* text;
+} tRendererText;
+
+extern tRendererText renderer_texts[RENDERER_TEXT_COUNT];
+
 extern const char *renderer_script;
 
 void renderer_init();

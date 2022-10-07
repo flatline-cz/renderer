@@ -26,3 +26,13 @@ int main() {
 
     return 0;
 }
+
+const char* renderer_script=
+        // define tile names
+        " 0 const RENDER_TILE_main "
+        " 1 const RENDER_TILE_main_sign1 "
+        " 2 const RENDER_TILE_main_sign2 "
+
+        // show screen
+        " RENDER_TILE_main show_screen "
+;
