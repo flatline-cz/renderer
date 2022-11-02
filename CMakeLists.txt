@@ -7,3 +7,5 @@ set(RENDERER_SOURCES
 set(RENDERER_INCLUDES
         ${CMAKE_CURRENT_LIST_DIR}/include
         )
+
+include(${CMAKE_CURRENT_LIST_DIR}/binding/wasm/CMakeLists.txt)

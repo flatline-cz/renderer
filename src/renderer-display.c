@@ -270,8 +270,9 @@ bool renderer_update_display(unsigned buffer) {
     vc_cmd_start();
     render_tile(buffers + buffer, root_tile);
     vc_cmd_end_of_list();
-    if (!vc_cmd_execute(video_buffer, video_buffer_length))
-        return false;
+    // TODO:
+//    if (!vc_cmd_execute(video_buffer, video_buffer_length))
+//        return false;
     update_tile_cache(buffer);
     return true;
 }

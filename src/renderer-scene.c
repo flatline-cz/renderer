@@ -4,9 +4,9 @@
 #include "renderer.h"
 
 
-//int __attribute__((weak)) renderer_display_ready() {
-//    return -1;
-//}
+int __attribute__((weak)) renderer_display_ready() {
+    return -1;
+}
 
 bool renderer_handle() {
     int buffer = renderer_display_ready();
