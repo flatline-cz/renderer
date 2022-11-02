@@ -11,8 +11,8 @@ set(RENDERER_INCLUDES
         )
 
 set(RENDERER_SOURCES
-        ${CMAKE_CURRENT_LIST_DIR}/../renderer/renderer-display.c
-        ${CMAKE_CURRENT_LIST_DIR}/../renderer/renderer-scene.c
+        renderer-display.c
+        renderer-scene.c
         ${CMAKE_CURRENT_LIST_DIR}/../scripting/scripting.c
         ${CMAKE_CURRENT_LIST_DIR}/../scripting/library.c
         ${ZFORTH_SOURCES}

@@ -1,9 +1,0 @@
-[submodule "common"]
-	path = common
-	url = git@github.com:flatline-cz/dashboard-lib.git
-[submodule "src/zForth"]
-	path = src/zForth
-	url = git@github.com:flatline-cz/zForth.git
-[submodule "forth"]
-	path = forth
-	url = git@github.com:flatline-cz/zForth.git
