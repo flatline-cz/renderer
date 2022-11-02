@@ -1,8 +1,0 @@
-cmake_minimum_required(VERSION 3.21)
-
-list(APPEND RENDERER_IMPL_SOURCES
-    ${CMAKE_CURRENT_LIST_DIR}/ri-structure.c
-    ${CMAKE_CURRENT_LIST_DIR}/ri-texts.c
-    )
-
-list(APPEND RENDERER_IMPL_INCLUDES ${CMAKE_CURRENT_LIST_DIR}/)
