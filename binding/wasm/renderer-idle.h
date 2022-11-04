@@ -9,9 +9,11 @@
 #include <stdint.h>
 #include "profile.h"
 
-bool wasm_renderer_idle_handle();
+bool wasm_renderer_idle_init(tWasm_context* ctx);
 
-bool wasm_renderer_idle_register(const uint8_t* name, uint16_t name_len, tTime period);
-bool wasm_renderer_idle_deregister(const uint8_t* name, uint16_t name_len);
+bool wasm_renderer_idle_handle(tWasm_context* ctx);
+
+bool wasm_renderer_idle_register(uint16_t function_index, uint32_t data, tTime period);
+bool wasm_renderer_idle_deregister(uint16_t function_index, uint32_t data);
 
 #endif //DASHBOARD_RENDERER_IDLE_H

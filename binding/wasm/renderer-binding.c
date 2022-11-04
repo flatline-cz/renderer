@@ -25,7 +25,7 @@ static bool binding_show_screen_routine(tWasm_function_call *call_ctx);
 
 static tWasm_binding binding_show_screen = {
         .call_ctx = {
-                .name = "renderer_show_screen",
+                .function = {.name = "renderer_show_screen"},
                 .return_value =  {.type = WASM_BINDING_TYPE_NONE},
                 .params = binding_show_screen_params,
                 .param_count = 1
@@ -59,7 +59,7 @@ static bool binding_set_visibility_routine(tWasm_function_call *call_ctx);
 
 static tWasm_binding binding_set_visibility = {
         .call_ctx = {
-                .name = "renderer_set_visibility",
+                .function = {.name = "renderer_set_visibility"},
                 .return_value =  {.type = WASM_BINDING_TYPE_NONE},
                 .params = binding_set_visibility_params,
                 .param_count = 2
