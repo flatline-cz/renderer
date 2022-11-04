@@ -104,7 +104,7 @@ void scripting_init() {
 static tTime idle = 0;
 
 bool scripting_handle() {
-    tTime now = time_get();
+    tTime now = TIME_GET;
     if (now < idle)
         return false;
     idle = now + 100;

@@ -269,7 +269,7 @@ void opengl_init() {
 static bool active_buffer=true;
 static tTime swap_buffers=0;
 int renderer_display_ready() {
-    tTime now=time_get();
+    tTime now=TIME_GET;
     if(now<swap_buffers)
         return -1;
     swap_buffers=now+100;

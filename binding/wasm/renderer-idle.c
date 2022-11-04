@@ -114,7 +114,7 @@ bool wasm_renderer_idle_register(uint16_t function_index, uint32_t data, tTime p
     routine->period = period;
     routine->function_index = function_index;
     routine->function_data = data;
-    routine->timeout = time_get() + period;
+    routine->timeout = TIME_GET + period;
 
     return true;
 }
@@ -158,7 +158,7 @@ bool wasm_renderer_idle_handle(tWasm_context *ctx) {
         return false;
 
     //  no scanning in progress?
-    tTime now = time_get();
+    tTime now = TIME_GET;
     if (routine_position == -1) {
         // keep minimum period
         if (last_time + IDLE_MINIMUM_PERIOD > now)
