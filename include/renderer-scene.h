@@ -6,7 +6,7 @@
 #define RENDERER_TEST_RENDERER_SCENE_H
 
 #include <stdbool.h>
-#include "renderer-types.h"
+#include "renderer-definition.h"
 
 void renderer_set_visibility(tRendererTileHandle tile, bool visible);
 

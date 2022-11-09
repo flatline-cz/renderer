@@ -7,8 +7,23 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include "renderer-types.h"
 #include "ri-constants.h"
+
+typedef uint16_t tRendererPosition;
+
+#define RENDERER_NULL_HANDLE                      0xffff
+typedef uint16_t tRendererTileHandle;
+
+typedef uint16_t tRendererScreenHandle;
+
+typedef uint16_t tRendererVideoHandle;
+
+typedef struct tRendererColor {
+    unsigned red: 8;
+    unsigned green: 8;
+    unsigned blue: 8;
+    unsigned alpha: 8;
+} tRendererColor;
 
 typedef enum eRendererTileMode {
     COLOR,

@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <stdio.h>
-#include "renderer.h"
+#include "renderer-scene.h"
 #include "video-core-hw.h"
 
 static tRendererTileHandle root_tile = RENDERER_NULL_HANDLE;
@@ -187,7 +187,8 @@ static void compute_area_to_redraw(tVideoBuffer *buffer,
         || cache->color.green != tile->color.green
         || cache->color.red != tile->color.red
         || cache->color.alpha != tile->color.alpha
-        || cache->texture.texture_base != tile->texture.texture_base) {
+        // TODO:
+        /*|| cache->texture.texture_base != tile->texture.texture_base*/) {
         // redraw current rectangle
         list->count = 1;
         list->area[0].x1 = tile->position_left;
@@ -340,14 +341,15 @@ static bool vc_cmd_rect_texture(tRendererPosition left,
     if (!vc_cmd_rect_common(left, top, width, height, color))
         return false;
 
-    uint32_t texture_base=texture->texture_base;
-    texture_base+=texture_left;
-    texture_base+=texture_top*1024;
-
-    video_buffer[video_buffer_length++] = (texture_base & 0xff);
-    video_buffer[video_buffer_length++] = (texture_base >> 8) & 0xff;
-    video_buffer[video_buffer_length++] = (texture_base >> 16) & 0xff;
-    video_buffer[video_buffer_length++] = (texture_base >> 24) & 0xff;
+    // TODO:
+//    uint32_t texture_base=texture->texture_base;
+//    texture_base+=texture_left;
+//    texture_base+=texture_top*1024;
+//
+//    video_buffer[video_buffer_length++] = (texture_base & 0xff);
+//    video_buffer[video_buffer_length++] = (texture_base >> 8) & 0xff;
+//    video_buffer[video_buffer_length++] = (texture_base >> 16) & 0xff;
+//    video_buffer[video_buffer_length++] = (texture_base >> 24) & 0xff;
 
     return true;
 }

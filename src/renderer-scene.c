@@ -2,6 +2,7 @@
 // Created by tumap on 7/31/22.
 //
 #include "renderer.h"
+#include "renderer-definition.h"
 
 
 int __attribute__((weak)) renderer_display_ready() {
@@ -16,10 +17,11 @@ bool renderer_handle() {
     return renderer_update_display(buffer);
 }
 
-static void propagate_visibility(tRendererTileHandle tile, bool visible) {
+static void propagate_visibility(tRendererTileHandle tile_handle, bool visible) {
     unsigned i, count;
-    const tRendererTileHandle *children = renderer_tiles[tile].children_tiles;
-    for (i = 0, count = renderer_tiles[tile].children_count; i < count; i++, children++) {
+    tRendererTile *tile = renderer_tiles + tile_handle;
+    const tRendererTileHandle *children = tile->children_tiles;
+    for (i = 0, count = tile->children_count; i < count; i++, children++) {
         renderer_tiles[*children].parent_visible = visible;
         propagate_visibility(*children, visible && renderer_tiles[*children].tile_visible);
     }
@@ -51,17 +53,16 @@ static const uint32_t offsetsFromUTF8[6] = {
 };
 #define isutf(c) (((c)&0xC0)!=0x80)
 
-static uint32_t utf_nextchar(const char *s, unsigned *i)
-{
+static uint32_t utf_nextchar(const char *s, unsigned *i) {
     uint32_t ch = 0;
     int sz = 0;
 
     do {
         ch <<= 6;
-        ch += (unsigned char)s[(*i)++];
+        ch += (unsigned char) s[(*i)++];
         sz++;
     } while (s[*i] && !isutf(s[*i]));
-    ch -= offsetsFromUTF8[sz-1];
+    ch -= offsetsFromUTF8[sz - 1];
 
     return ch;
 }
@@ -76,9 +77,9 @@ void renderer_set_text(tRendererTileHandle tile_handle, const char *text) {
     tRendererPosition x = 0;
     while (*text && character_index < text_definition->tile_count) {
         // extract code point
-        unsigned i=0;
+        unsigned i = 0;
         uint32_t code_point = utf_nextchar(text, &i);
-        text+=i;
+        text += i;
 
         // space?
         if (code_point == ' ') {
@@ -94,7 +95,7 @@ void renderer_set_text(tRendererTileHandle tile_handle, const char *text) {
         }
         if (i == 0) {
             // unknown code point -> show space
-            x+=text_definition->font->space_width;
+            x += text_definition->font->space_width;
             continue;
         }
 
@@ -107,7 +108,8 @@ void renderer_set_text(tRendererTileHandle tile_handle, const char *text) {
         tile->position_height = glyph->height;
         tile->position_right = tile->position_left + tile->position_width - 1;
         tile->position_bottom = tile->position_top + tile->position_height - 1;
-        tile->texture.texture_base = glyph->texture.texture_base;
+        // TODO:
+//        tile->texture.texture_base = glyph->texture.texture_base;
 
         x += glyph->advance_x;
 

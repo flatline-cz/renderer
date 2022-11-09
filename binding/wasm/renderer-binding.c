@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include "renderer-binding.h"
 #include "wa-binding.h"
-#include "renderer.h"
+#include "renderer-scene.h"
 
 // ***********************************
 // **                               **
