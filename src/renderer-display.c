@@ -19,7 +19,7 @@ typedef struct tVideoBuffer {
 } tVideoBuffer;
 static tVideoBuffer buffers[VIDEO_BUFFERS];
 
-void renderer_init() {
+void renderer_init_old() {
     unsigned i;
     for (i = 0; i < VIDEO_BUFFERS; i++)
         buffers[i].not_rendered_at_all = true;
@@ -28,8 +28,8 @@ void renderer_init() {
 static void update_tile_cache(unsigned buffer);
 
 // VideoCore commands & buffer
-#define VIDEOCODE_BUFFER_SIZE           (8*1024)
-static uint8_t video_buffer[VIDEOCODE_BUFFER_SIZE];
+#define VIDEO_CORE_BUFFER_SIZE           (8*1024)
+static uint8_t video_buffer[VIDEO_CORE_BUFFER_SIZE];
 static unsigned video_buffer_length;
 
 
@@ -52,10 +52,11 @@ static bool vc_cmd_rect_texture(tRendererPosition left,
                                 tRendererPosition texture_left,
                                 tRendererPosition texture_top);
 
-void renderer_show_screen(tRendererTileHandle tile) {
+void renderer_show_screen_old(tRendererTileHandle tile) {
     if (root_tile != tile) {
         root_tile = tile;
-        renderer_init();
+        // FIXME
+//        renderer_init();
     }
 }
 
@@ -289,7 +290,7 @@ static bool vc_cmd_rect_common(tRendererPosition left,
                                tRendererPosition width,
                                tRendererPosition height,
                                tRendererColor color) {
-    if (video_buffer_length + 12 >= VIDEOCODE_BUFFER_SIZE)
+    if (video_buffer_length + 12 >= VIDEO_CORE_BUFFER_SIZE)
         return false;
 
     video_buffer[video_buffer_length++] = 0x00;

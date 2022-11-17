@@ -9,7 +9,7 @@ int __attribute__((weak)) renderer_display_ready() {
     return -1;
 }
 
-bool renderer_handle() {
+bool renderer_handle_old() {
     int buffer = renderer_display_ready();
     if (buffer < 0)
         return false;
