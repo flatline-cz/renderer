@@ -4,6 +4,13 @@
 #include "renderer.h"
 #include "renderer-definition.h"
 #include "video-core-hw.h"
+#include "profile.h"
+
+
+// Status query
+static uint8_t last_status;
+
+
 
 // state machine
 typedef enum eState_ {
@@ -12,6 +19,8 @@ typedef enum eState_ {
     STATE_DISPLAY_OFF,
     STATE_SWITCH_RENDER,
     STATE_SWITCH_RENDER_WAIT,
+    STATE_SWITCH_RENDER_CHECK,
+    STATE_SWITCH_RENDER_CHECK_WAIT,
     STATE_RENDERING,
 } eState;
 static eState state;
@@ -63,7 +72,23 @@ bool renderer_handle() {
             break;
         case STATE_SWITCH_RENDER_WAIT:
             if(vc_response_ready()) {
-                state=STATE_RENDERING;
+                state=STATE_SWITCH_RENDER_CHECK;
+                return true;
+            }
+            break;
+        case STATE_SWITCH_RENDER_CHECK:
+            request.type=VC_GET_STATUS;
+            if(vc_send_request(&request)) {
+                state=STATE_SWITCH_RENDER_CHECK_WAIT;
+                return true;
+            }
+            break;
+        case STATE_SWITCH_RENDER_CHECK_WAIT:
+            if(vc_response_ready()) {
+                if((request.status.status&0x10)==0x10)
+                    state=STATE_RENDERING;
+                else
+                    state=STATE_SWITCH_RENDER;
                 return true;
             }
             break;
