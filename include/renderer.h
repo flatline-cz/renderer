@@ -6,14 +6,15 @@
 #define RENDERER_RENDERER_H
 
 #include <stdbool.h>
+#include <stdint.h>
 
 void renderer_init();
 
 bool renderer_handle();
 
-bool renderer_update_display(unsigned buffer);
+void renderer_update_display(uint8_t* queue_data, uint16_t queue_max_length,
+                             uint16_t* queue_lenth);
 
-int renderer_display_ready();
 
 
 #endif //RENDERER_RENDERER_H

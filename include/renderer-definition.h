@@ -32,9 +32,7 @@ typedef enum eRendererTileMode {
 } eRendererTileMode;
 
 typedef struct tRendererTexture {
-    uint8_t block;
-    uint8_t row;               // 8 bits
-    uint16_t column;            // 10 bits
+    uint32_t base;
     uint16_t stripe_length;     // 10 bits
     bool packed_alpha;
 } tRendererTexture;
@@ -111,12 +109,22 @@ typedef struct tRendererVideoFrameDescriptor {
 
 typedef struct tRendererVideoDescriptor {
     uint16_t frame_count;
-    tRendererVideoFrameDescriptor * frames;
+    tRendererVideoFrameDescriptor *frames;
+    const uint8_t *data;
+    uint32_t length;
 } tRendererVideoDescriptor;
+
+typedef struct tRendererScreenGraphics {
+    tRendererScreenHandle screen;
+    const uint8_t *data;
+    uint32_t length;
+    uint32_t base;
+} tRendererScreenGraphics;
 
 extern tRendererText renderer_texts[RENDERER_TEXT_COUNT];
 extern tRendererTile renderer_tiles[RENDERER_TILES_COUNT];
-extern tRendererVideoDescriptor  renderer_videos[RENDERER_VIDEO_COUNT];
+extern tRendererVideoDescriptor renderer_videos[RENDERER_VIDEO_COUNT];
+//extern tRendererScreenGraphics renderer_graphics[1]
 
 extern const char *renderer_script;
 

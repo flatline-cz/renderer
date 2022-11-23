@@ -7,9 +7,7 @@
 #include "renderer-scene.h"
 #include "video-core-hw.h"
 
-static tRendererTileHandle root_tile = RENDERER_NULL_HANDLE;
-
-#define VIDEO_BUFFERS 2
+extern tRendererTileHandle root_tile;
 
 // a local copy of graphics scene as it was last rendered
 // used for detecting the changes as only these are actually rendered
@@ -17,15 +15,10 @@ typedef struct tVideoBuffer {
     bool not_rendered_at_all;
     tRendererTile tile_cache[RENDERER_TILES_COUNT];
 } tVideoBuffer;
-static tVideoBuffer buffers[VIDEO_BUFFERS];
+static tVideoBuffer buffer;
 
-void renderer_init_old() {
-    unsigned i;
-    for (i = 0; i < VIDEO_BUFFERS; i++)
-        buffers[i].not_rendered_at_all = true;
-}
 
-static void update_tile_cache(unsigned buffer);
+static void update_tile_cache();
 
 // VideoCore commands & buffer
 #define VIDEO_CORE_BUFFER_SIZE           (8*1024)
@@ -33,24 +26,26 @@ static uint8_t video_buffer[VIDEO_CORE_BUFFER_SIZE];
 static unsigned video_buffer_length;
 
 
-static void vc_cmd_start();
-
-static void vc_cmd_end_of_list();
-
-static bool vc_cmd_rect_color(tRendererPosition left,
+static void vc_cmd_rect_color(tRendererPosition left,
                               tRendererPosition top,
                               tRendererPosition width,
                               tRendererPosition height,
-                              tRendererColor color);
+                              tRendererColor color,
+                              uint8_t *buffer,
+                              uint16_t max_length,
+                              uint16_t *length);
 
-static bool vc_cmd_rect_texture(tRendererPosition left,
+static void vc_cmd_rect_texture(tRendererPosition left,
                                 tRendererPosition top,
                                 tRendererPosition width,
                                 tRendererPosition height,
                                 tRendererColor color,
                                 tRendererTexture *texture,
                                 tRendererPosition texture_left,
-                                tRendererPosition texture_top);
+                                tRendererPosition texture_top,
+                                uint8_t *buffer,
+                                uint16_t max_length,
+                                uint16_t *length);
 
 void renderer_show_screen_old(tRendererTileHandle tile) {
     if (root_tile != tile) {
@@ -188,8 +183,9 @@ static void compute_area_to_redraw(tVideoBuffer *buffer,
         || cache->color.green != tile->color.green
         || cache->color.red != tile->color.red
         || cache->color.alpha != tile->color.alpha
-        // TODO:
-        /*|| cache->texture.texture_base != tile->texture.texture_base*/) {
+        || cache->texture.packed_alpha != tile->texture.packed_alpha
+        || cache->texture.base != tile->texture.base
+        || cache->texture.stripe_length != tile->texture.stripe_length) {
         // redraw current rectangle
         list->count = 1;
         list->area[0].x1 = tile->position_left;
@@ -203,7 +199,10 @@ static void compute_area_to_redraw(tVideoBuffer *buffer,
     list->count = 0;
 }
 
-static void redraw_tile(tVideoBuffer *buffer, tRendererTile *tile, tRectangle *bounding_box) {
+static void redraw_tile(tVideoBuffer *buffer, tRendererTile *tile,
+                        tRectangle *bounding_box,
+                        uint8_t *queue_data, uint16_t queue_size,
+                        uint16_t *queue_length) {
     // out of bounding box?
     if (tile->position_right < bounding_box->x1
         || tile->position_left > bounding_box->x2
@@ -223,12 +222,14 @@ static void redraw_tile(tVideoBuffer *buffer, tRendererTile *tile, tRectangle *b
             vc_cmd_rect_texture(x1, y1, x2 + 1 - x1, y2 + 1 - y1,
                                 tile->color,
                                 &tile->texture,
-                                x1-tile->position_left,
-                                y1-tile->position_top);
+                                x1 - tile->position_left,
+                                y1 - tile->position_top, \
+                                queue_data, queue_size, queue_length);
             break;
         case COLOR:
         default:
-            vc_cmd_rect_color(x1, y1, x2 + 1 - x1, y2 + 1 - y1, tile->color);
+            vc_cmd_rect_color(x1, y1, x2 + 1 - x1, y2 + 1 - y1, tile->color,
+                              queue_data, queue_size, queue_length);
             break;
     }
 
@@ -237,13 +238,15 @@ static void redraw_tile(tVideoBuffer *buffer, tRendererTile *tile, tRectangle *b
     for (i = 0; i < tile->children_count; i++) {
         tRendererTile *child = renderer_tiles + tile->children_tiles[i];
         if (child->tile_visible)
-            redraw_tile(buffer, child, bounding_box);
+            redraw_tile(buffer, child, bounding_box, queue_data, queue_size, queue_length);
     }
 
 
 }
 
-static void render_tile(tVideoBuffer *buffer, tRendererTileHandle tile_handle) {
+static void render_tile(tVideoBuffer *buffer, tRendererTileHandle tile_handle,
+                        uint8_t *queue_data, uint16_t queue_size,
+                        uint16_t *queue_length) {
     static tRedrawList list;
     tRendererTile *tile = renderer_tiles + tile_handle;
 
@@ -254,112 +257,110 @@ static void render_tile(tVideoBuffer *buffer, tRendererTileHandle tile_handle) {
         // redraw areas
         unsigned i;
         for (i = 0; i < list.count; i++)
-            redraw_tile(buffer, renderer_tiles + tile->root_tile, list.area + i);
+            redraw_tile(buffer, renderer_tiles + tile->root_tile, list.area + i,
+                        queue_data, queue_size, queue_length);
     } else {
         // render children?
         if (tile->tile_visible) {
             unsigned i;
             for (i = 0; i < tile->children_count; i++)
-                render_tile(buffer, tile->children_tiles[i]);
+                render_tile(buffer, tile->children_tiles[i],
+                            queue_data, queue_size, queue_length);
         }
     }
 
 }
 
-bool renderer_update_display(unsigned buffer) {
+void renderer_update_display(uint8_t *queue_data, uint16_t queue_max_length,
+                             uint16_t *queue_length) {
+    *queue_length = 0;
     if (root_tile == RENDERER_NULL_HANDLE)
-        return false;
-    vc_cmd_start();
-    render_tile(buffers + buffer, root_tile);
-    vc_cmd_end_of_list();
-    // TODO:
-//    if (!vc_cmd_execute(video_buffer, video_buffer_length))
-//        return false;
-    update_tile_cache(buffer);
-    return true;
+        return;
+    render_tile(&buffer, root_tile, queue_data, queue_max_length, queue_length);
+    if (*queue_length)
+        update_tile_cache();
 }
 
 
-static void update_tile_cache(unsigned buffer) {
-    memcpy(buffers[buffer].tile_cache, renderer_tiles, sizeof(tRendererTile) * RENDERER_TILES_COUNT);
-    buffers[buffer].not_rendered_at_all = false;
+static void update_tile_cache() {
+    memcpy(&buffer.tile_cache, renderer_tiles, sizeof(tRendererTile) * RENDERER_TILES_COUNT);
+    buffer.not_rendered_at_all = false;
 }
 
-static bool vc_cmd_rect_common(tRendererPosition left,
-                               tRendererPosition top,
-                               tRendererPosition width,
-                               tRendererPosition height,
-                               tRendererColor color) {
-    if (video_buffer_length + 12 >= VIDEO_CORE_BUFFER_SIZE)
-        return false;
+static void vc_cmd_common(tRendererPosition left,
+                          tRendererPosition top,
+                          tRendererPosition width,
+                          tRendererPosition height,
+                          uint8_t *buffer,
+                          uint16_t max_length,
+                          uint16_t *length) {
+    buffer[(*length)++] = top & 0xff;
+    buffer[(*length)++] = left & 0xff;
+    buffer[(*length)++] = (top + height - 1) & 0xff;
+    buffer[(*length)++] = (left + width - 1) & 0xff;
+    buffer[(*length)++] =
+            (((left >> 8) & 3) << 2)
+            | (((top >> 8) & 3) << 0)
+            | ((((left + width - 1) >> 8) & 3) << 6)
+            | ((((top + height - 1) >> 8) & 3) << 4);
+}
 
-    video_buffer[video_buffer_length++] = 0x00;
-    video_buffer[video_buffer_length++] = left & 0xff;
-    video_buffer[video_buffer_length++] = top & 0xff;
-    video_buffer[video_buffer_length++] = (left + width - 1) & 0xff;
-    video_buffer[video_buffer_length++] = (top + height - 1) & 0xff;
-    video_buffer[video_buffer_length++] =
-            ((left >> 8) & 3)
-            | (((top >> 8) & 3) << 2)
-            | ((((left + width - 1) >> 8) & 3) << 4)
-            | ((((top + height - 1) >> 8) & 3) << 6);
-
+static void vc_cmd_color(tRendererColor color,
+                         uint8_t *buffer,
+                         uint16_t max_length,
+                         uint16_t *length) {
     uint8_t red = ((color.red) >> 4) & 0x0f;
     uint8_t green = ((color.green) >> 4) & 0x0f;
     uint8_t blue = ((color.blue) >> 4) & 0x0f;
     uint8_t alpha = ((color.alpha) >> 4) & 0x0f;
 
-    video_buffer[video_buffer_length++] = red | (green << 4);
-    video_buffer[video_buffer_length++] = blue | (alpha << 4);
-
-    return true;
+    buffer[(*length)++] = red | (green << 4);
+    buffer[(*length)++] = blue | (alpha << 4);
 }
 
-static bool vc_cmd_rect_color(tRendererPosition left,
+static void vc_cmd_rect_color(tRendererPosition left,
                               tRendererPosition top,
                               tRendererPosition width,
                               tRendererPosition height,
-                              tRendererColor color) {
-    if (!vc_cmd_rect_common(left, top, width, height, color))
-        return false;
+                              tRendererColor color,
+                              uint8_t *buffer,
+                              uint16_t max_length,
+                              uint16_t *length) {
+    vc_cmd_common(left, top, width, height,
+                  buffer, max_length, length);
 
-    video_buffer[video_buffer_length++] = 0;
-    video_buffer[video_buffer_length++] = 0;
-    video_buffer[video_buffer_length++] = 0;
-    video_buffer[video_buffer_length++] = 0;
+    buffer[(*length)++] = 0x00;
 
-    return true;
+    vc_cmd_color(color,
+                 buffer, max_length, length);
 }
 
-static bool vc_cmd_rect_texture(tRendererPosition left,
+static void vc_cmd_rect_texture(tRendererPosition left,
                                 tRendererPosition top,
                                 tRendererPosition width,
                                 tRendererPosition height,
                                 tRendererColor color,
                                 tRendererTexture *texture,
                                 tRendererPosition texture_left,
-                                tRendererPosition texture_top) {
-    if (!vc_cmd_rect_common(left, top, width, height, color))
-        return false;
+                                tRendererPosition texture_top,
+                                uint8_t *buffer,
+                                uint16_t max_length,
+                                uint16_t *length) {
+    vc_cmd_common(left, top, width, height,
+                  buffer, max_length, length);
 
-    // TODO:
-//    uint32_t texture_base=texture->texture_base;
-//    texture_base+=texture_left;
-//    texture_base+=texture_top*1024;
-//
-//    video_buffer[video_buffer_length++] = (texture_base & 0xff);
-//    video_buffer[video_buffer_length++] = (texture_base >> 8) & 0xff;
-//    video_buffer[video_buffer_length++] = (texture_base >> 16) & 0xff;
-//    video_buffer[video_buffer_length++] = (texture_base >> 24) & 0xff;
 
-    return true;
-}
+    buffer[(*length)++] = 0x01 | ((texture->stripe_length & 0x0300) >> 8);
+    buffer[(*length)++] = texture->stripe_length & 0xff;
 
-static void vc_cmd_end_of_list() {
-    video_buffer[video_buffer_length++] = 0x80;
-}
+    uint32_t base = texture->base;
+    base += texture_top * texture->stripe_length;
+    base += texture_left;
+    buffer[(*length)++] = base & 0x0ff;
+    buffer[(*length)++] = (base >> 8) & 0x0ff;
+    buffer[(*length)++] = (base >> 16) & 0x0ff;
 
-static void vc_cmd_start() {
-    video_buffer_length = 0;
+    vc_cmd_color(color,
+                 buffer, max_length, length);
 }
 

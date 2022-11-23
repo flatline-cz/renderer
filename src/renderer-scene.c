@@ -5,17 +5,6 @@
 #include "renderer-definition.h"
 
 
-int __attribute__((weak)) renderer_display_ready() {
-    return -1;
-}
-
-bool renderer_handle_old() {
-    int buffer = renderer_display_ready();
-    if (buffer < 0)
-        return false;
-
-    return renderer_update_display(buffer);
-}
 
 static void propagate_visibility(tRendererTileHandle tile_handle, bool visible) {
     unsigned i, count;
@@ -108,8 +97,9 @@ void renderer_set_text(tRendererTileHandle tile_handle, const char *text) {
         tile->position_height = glyph->height;
         tile->position_right = tile->position_left + tile->position_width - 1;
         tile->position_bottom = tile->position_top + tile->position_height - 1;
-        // TODO:
-//        tile->texture.texture_base = glyph->texture.texture_base;
+        tile->texture.base=glyph->texture.base;
+        tile->texture.stripe_length=glyph->texture.stripe_length;
+        tile->texture.packed_alpha=glyph->texture.packed_alpha;
 
         x += glyph->advance_x;
 

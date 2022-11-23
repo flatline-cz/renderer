@@ -12,11 +12,7 @@ typedef enum eVCRequestType_ {
     VC_GET_STATUS,
     VC_SET_MODE,
     VC_FILL_QUEUE,
-    VC_FILL_FLASH_ROW,
-    VC_FETCH_FLASH_ROW,
-    VC_READ_FLASH,
-    VC_ERASE_FLASH,
-    VC_PROGRAM_FLASH,
+    VC_FILL_STORAGE,
     VC_SET_VIDEO_DESCRIPTOR
 } eVCRequestType;
 
@@ -34,18 +30,13 @@ typedef struct tVCRequest_ {
     eVCRequestType type;
     union {
         struct {
-            uint8_t status;
-        } status;
-        struct {
             uint8_t *buffer;
             uint16_t length;
         } fill_queue;
         struct {
-            uint8_t *buffer;
-        } flash_data;
-        struct {
             uint32_t address;
-        } flash_address;
+            uint8_t *buffer;
+        } storage;
         struct {
             eVCRenderingMode mode;
         } rendering_mode;
@@ -62,7 +53,8 @@ bool vc_check_interrupt();
 
 bool vc_send_request(tVCRequest *request);
 
-bool vc_response_ready();
+bool vc_get_status(uint8_t* status);
+
 
 
 
