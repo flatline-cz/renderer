@@ -9,6 +9,10 @@
 #include <stdbool.h>
 #include "ri-constants.h"
 
+#ifndef NULL
+#define NULL ((void*)0)
+#endif
+
 typedef uint16_t tRendererPosition;
 
 #define RENDERER_NULL_HANDLE                      0xffff
@@ -124,7 +128,7 @@ typedef struct tRendererScreenGraphics {
 extern tRendererText renderer_texts[RENDERER_TEXT_COUNT];
 extern tRendererTile renderer_tiles[RENDERER_TILES_COUNT];
 extern tRendererVideoDescriptor renderer_videos[RENDERER_VIDEO_COUNT];
-//extern tRendererScreenGraphics renderer_graphics[1]
+extern tRendererScreenGraphics renderer_graphics[RENDERER_GRAPHICS_COUNT];
 
 extern const char *renderer_script;
 

@@ -35,7 +35,8 @@ typedef struct tVCRequest_ {
         } fill_queue;
         struct {
             uint32_t address;
-            uint8_t *buffer;
+            const uint8_t *buffer;
+            uint32_t length;
         } storage;
         struct {
             eVCRenderingMode mode;

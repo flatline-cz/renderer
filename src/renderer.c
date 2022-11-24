@@ -23,6 +23,11 @@ static bool render_ready =  false;
 static uint8_t render_queue_data[8*1024];
 static uint16_t render_queue_length=0;
 tRendererTileHandle root_tile = RENDERER_NULL_HANDLE;
+#define STATE_GRAPHICS_IDLE         0
+#define STATE_GRAPHICS_SENT         1
+#define STATE_GRAPHICS_WAIT         2
+static unsigned state_graphics;
+
 
 
 void renderer_init() {
@@ -71,6 +76,34 @@ bool renderer_handle() {
     // Mode is valid
 
     if(current_mode==NORMAL) {
+        // texture graphics loaded?
+        switch (state_graphics) {
+            case STATE_GRAPHICS_SENT: {
+                tVCRequest request;
+                request.type=VC_FILL_STORAGE;
+                request.storage.buffer=renderer_graphics[0].data;
+                request.storage.length=renderer_graphics[0].length;
+                request.storage.address=renderer_graphics[0].base;
+                if(vc_send_request(&request)) {
+                    state_graphics=STATE_GRAPHICS_WAIT;
+                    return true;
+                }
+                return false;
+            }
+            case STATE_GRAPHICS_WAIT: {
+                uint8_t status;
+                if(vc_get_status(&status)) {
+                    state_graphics=STATE_GRAPHICS_IDLE;
+                    break;
+                }
+                return false;
+            }
+            case STATE_GRAPHICS_IDLE:
+            default:
+                break;
+        }
+
+
         if(!vsync_passed) {
             if(vc_check_vsync())
                 vsync_passed=true;
@@ -112,7 +145,13 @@ bool renderer_handle() {
 }
 
 void renderer_show_screen(tRendererScreenHandle screen_handle) {
-    requested_mode = NORMAL;
+    if(current_mode!=NORMAL) {
+        requested_mode=NORMAL;
+        state_graphics=STATE_GRAPHICS_SENT;
+    } else {
+        if(root_tile!=screen_handle)
+            state_graphics=STATE_GRAPHICS_SENT;
+    }
     root_tile=screen_handle;
 }
 
