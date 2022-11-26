@@ -106,14 +106,9 @@ typedef struct tRendererText {
     uint16_t *text;
 } tRendererText;
 
-typedef struct tRendererVideoFrameDescriptor {
-    uint8_t block;
-    uint8_t row;
-} tRendererVideoFrameDescriptor;
-
 typedef struct tRendererVideoDescriptor {
     uint16_t frame_count;
-    tRendererVideoFrameDescriptor *frames;
+    const uint32_t *frame_offsets;
     const uint8_t *data;
     uint32_t length;
 } tRendererVideoDescriptor;
