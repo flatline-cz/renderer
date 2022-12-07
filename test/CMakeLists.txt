@@ -6,8 +6,8 @@ set(EGL_TEST_INCLUDES
 
 set(EGL_TEST_SOURCES
         ${CMAKE_CURRENT_LIST_DIR}/egl/main.c
-        ${CMAKE_CURRENT_LIST_DIR}/egl/window.c
-        ${CMAKE_CURRENT_LIST_DIR}/egl/opengl.c)
+        ../src/opengl/window.c
+        ../src/opengl/opengl.c)
 
 add_executable(renderer-egl
         ${EGL_TEST_SOURCES}

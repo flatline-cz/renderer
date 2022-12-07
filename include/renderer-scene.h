@@ -19,7 +19,11 @@ void renderer_set_text(tRendererTileHandle tile, const char *text);
 
 void renderer_show_screen(tRendererScreenHandle screen_handle);
 
-void renderer_show_video(tRendererVideoHandle video_handle);
+typedef void (*rRendererVideoCallback)(const void*);
+
+void renderer_show_video(tRendererVideoHandle video_handle,
+                         rRendererVideoCallback callback,
+                         const void* callback_arg);
 
 void renderer_turn_off();
 

@@ -47,6 +47,7 @@ typedef struct tRendererTile {
     const tRendererTileHandle root_tile;
     const tRendererTileHandle *children_tiles;
     unsigned children_count;
+    bool overlapping_children;
 
     // visibility
     bool tile_visible;

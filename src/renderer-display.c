@@ -4,8 +4,8 @@
 #include <stdbool.h>
 #include <string.h>
 #include <stdio.h>
-#include "renderer-scene.h"
-#include "video-core-hw.h"
+#include <renderer-scene.h>
+#include <video-core.h>
 
 extern tRendererTileHandle root_tile;
 
@@ -16,6 +16,8 @@ typedef struct tVideoBuffer {
     tRendererTile tile_cache[RENDERER_TILES_COUNT];
 } tVideoBuffer;
 static tVideoBuffer buffer;
+
+tRendererTileHandle root_tile = RENDERER_NULL_HANDLE;
 
 
 static void update_tile_cache();
@@ -362,5 +364,24 @@ static void vc_cmd_rect_texture(tRendererPosition left,
 
     vc_cmd_color(color,
                  buffer, max_length, length);
+}
+
+void renderer_show_screen(tRendererScreenHandle screen_handle) {
+    // FIXME: find graphics context
+    vc_set_render_mode(renderer_graphics + 0);
+
+
+    if (screen_handle == root_tile)
+        return;
+    root_tile = screen_handle;
+    buffer.not_rendered_at_all = true;
+}
+
+void renderer_show_video(tRendererVideoHandle video_handle,
+                         rRendererVideoCallback callback,
+                         const void* callback_arg) {
+    // configure video core
+    vc_set_playback_mode(renderer_videos + video_handle,
+                         callback, callback_arg);
 }
 

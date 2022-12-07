@@ -5,7 +5,7 @@
 #include <GLES2/gl2.h>
 #include <malloc.h>
 #include <stdlib.h>
-#include "video-core-hw.h"
+#include "video-core.h"
 #include "window.h"
 #include "profile.h"
 

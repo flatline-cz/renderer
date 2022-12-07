@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include "renderer.h"
 #include "ri-constants.h"
-#include "window.h"
+#include "../../src/opengl/window.h"
 #include "profile.h"
 #include "scripting.h"
 
