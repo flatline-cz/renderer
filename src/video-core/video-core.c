@@ -2,7 +2,7 @@
 // Created by tumap on 12/5/22.
 //
 #include <spi.h>
-#include <schedule.h>
+#include <profile.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <renderer.h>
@@ -10,7 +10,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-#define TRACE(msg) fprintf(stderr, "%d.%03ds : %s\n", now/1000, now%1000, msg);
+#define TRACE(msg) fprintf(stderr, "%d.%03ds : %s\n", TIME_GET/1000, TIME_GET%1000, msg);
 
 // *******************************************
 // **  VIDEO CORE POLL CONTEXT              **
@@ -173,13 +173,13 @@ static eStatus handle_mode(uint8_t status) {
             // mode switch request not set yet?
             if (mode_switch_timeout == 0) {
                 set_mode(DISPLAY_OFF);
-                mode_switch_timeout = now + MODE_SWITCH_TIMEOUT;
+                mode_switch_timeout = TIME_GET + MODE_SWITCH_TIMEOUT;
                 return RETURN_TRUE;
             } else {
-                if (mode_switch_timeout > now)
+                if (mode_switch_timeout > TIME_GET)
                     return RETURN_FALSE;
                 set_mode(DISPLAY_OFF);
-                mode_switch_timeout = now + MODE_SWITCH_TIMEOUT;
+                mode_switch_timeout = TIME_GET + MODE_SWITCH_TIMEOUT;
                 return RETURN_TRUE;
             }
         }
@@ -224,17 +224,17 @@ static eStatus handle_mode(uint8_t status) {
         }
 
         // VIDEO CONTENT IS UPLOADED
-        last_rendering = now;
+        last_rendering = TIME_GET;
 
         if (mode_switch_timeout == 0) {
             set_mode(VIDEO);
-            mode_switch_timeout = now + MODE_SWITCH_TIMEOUT;
+            mode_switch_timeout = TIME_GET + MODE_SWITCH_TIMEOUT;
             return RETURN_TRUE;
         } else {
-            if (mode_switch_timeout > now)
+            if (mode_switch_timeout > TIME_GET)
                 return RETURN_FALSE;
             set_mode(VIDEO);
-            mode_switch_timeout = now + MODE_SWITCH_TIMEOUT;
+            mode_switch_timeout = TIME_GET + MODE_SWITCH_TIMEOUT;
             return RETURN_TRUE;
         }
     }
@@ -245,14 +245,14 @@ static eStatus handle_mode(uint8_t status) {
         if (mode_switch_timeout == 0) {
             // send request
             set_mode(requested_mode);
-            mode_switch_timeout = now + MODE_SWITCH_TIMEOUT;
+            mode_switch_timeout = TIME_GET + MODE_SWITCH_TIMEOUT;
             return RETURN_TRUE;
         } else {
             // check timeout
-            if (mode_switch_timeout > now)
+            if (mode_switch_timeout > TIME_GET)
                 return RETURN_FALSE;
             set_mode(requested_mode);
-            mode_switch_timeout = now + MODE_SWITCH_TIMEOUT;
+            mode_switch_timeout = TIME_GET + MODE_SWITCH_TIMEOUT;
             return RETURN_TRUE;
         }
     }
@@ -281,7 +281,7 @@ static eStatus handle_rendering(uint8_t status) {
         return RETURN_TRUE;
     }
 
-    if (last_rendering + RENDERING_PERIOD > now)
+    if (last_rendering + RENDERING_PERIOD > TIME_GET)
         return RETURN_FALSE;
 
     if (status & 0x02) {
@@ -293,7 +293,7 @@ static eStatus handle_rendering(uint8_t status) {
         if (size) {
             static uint8_t prefix[1] = {0x01};
             spi_send(prefix, 1, command_queue, size);
-            last_rendering = now;
+            last_rendering = TIME_GET;
             return RETURN_TRUE;
         }
 
@@ -304,7 +304,7 @@ static eStatus handle_rendering(uint8_t status) {
 
 static eStatus handle_playback(uint8_t status) {
     // rendering active
-    if (last_rendering + PLAYBACK_PERIOD > now)
+    if (last_rendering + PLAYBACK_PERIOD > TIME_GET)
         return RETURN_FALSE;
 
     if (video_frame >= video_descriptor->frame_count) {
@@ -327,7 +327,7 @@ static eStatus handle_playback(uint8_t status) {
     frame[2] = (video_descriptor->frame_offsets[video_frame] >> 8) & 0xff;
     frame[3] = (video_descriptor->frame_offsets[video_frame] >> 0) & 0xff;
     spi_send(NULL, 0, frame, 4);
-    last_rendering = now;
+    last_rendering = TIME_GET;
     video_frame++;
 
     return RETURN_TRUE;
@@ -335,11 +335,11 @@ static eStatus handle_playback(uint8_t status) {
 
 bool vc_handle() {
     // polling?
-    if (next_poll_time > now)
+    if (next_poll_time > TIME_GET)
         return false;
 
     // poll status
-    next_poll_time = now + POLL_PERIOD_MS;
+    next_poll_time = TIME_GET + POLL_PERIOD_MS;
     uint8_t status = query_status();
 
     // TODO: check if status is valid

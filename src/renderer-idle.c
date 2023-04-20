@@ -47,15 +47,15 @@ bool renderer_idle_handle() {
     }
 
     // check scheduler invocation time
-    if (contexts[next_context].scheduled_invocation > now)
+    if (contexts[next_context].scheduled_invocation > TIME_GET)
         return false;
 
     // execute routine
     tIdleRoutineContext *ctx = contexts + next_context;
-    ctx->routine(now - ctx->time_offset, ctx->routine_arg);
+    ctx->routine(TIME_GET - ctx->time_offset, ctx->routine_arg);
 
     // schedule next invocation
-    ctx->scheduled_invocation = now + ctx->period;
+    ctx->scheduled_invocation = TIME_GET + ctx->period;
 
     // find next context
     find_nearest_context();
@@ -85,10 +85,10 @@ void renderer_idle_register(tTime period, rRendererIdleRoutine routine, void *ro
         ctx = contexts + context_count;
         context_count++;
         ctx->period = period;
-        ctx->scheduled_invocation = now + period;
+        ctx->scheduled_invocation = TIME_GET + period;
         ctx->routine = routine;
         ctx->routine_arg = routine_arg;
-        ctx->time_offset = now;
+        ctx->time_offset = TIME_GET;
     }
 
     find_nearest_context();

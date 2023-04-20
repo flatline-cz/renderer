@@ -7,7 +7,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
-#include <schedule.h>
+#include <profile.h>
 
 void renderer_idle_init();
 
