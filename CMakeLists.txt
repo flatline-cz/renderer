@@ -5,6 +5,7 @@ set(RENDERER_SOURCES
         ${CMAKE_CURRENT_LIST_DIR}/src/renderer-idle.c
         ${CMAKE_CURRENT_LIST_DIR}/src/renderer.c
         ${CMAKE_CURRENT_LIST_DIR}/src/video-core/video-core.c
+        ${CMAKE_CURRENT_LIST_DIR}/src/scene-decoder/decoder.c
         )
 
 set(RENDERER_INCLUDES

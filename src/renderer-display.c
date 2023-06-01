@@ -8,13 +8,16 @@
 
 extern tRendererTileHandle root_tile;
 
+// FIXME: allocate memory
+static uint8_t tile_cache_mem[8 * 1024];
+
 // a local copy of graphics scene as it was last rendered
 // used for detecting the changes as only these are actually rendered
 typedef struct tVideoBuffer {
     bool not_rendered_at_all;
-    tRendererTile tile_cache[RENDERER_TILES_COUNT];
+    tRendererTile *tile_cache;
 } tVideoBuffer;
-static tVideoBuffer buffer;
+static tVideoBuffer buffer = {.not_rendered_at_all =true, .tile_cache=(tRendererTile *) tile_cache_mem};
 
 tRendererTileHandle root_tile = RENDERER_NULL_HANDLE;
 
@@ -284,7 +287,7 @@ void renderer_update_display(uint8_t *queue_data, uint16_t queue_max_length,
 
 
 static void update_tile_cache() {
-    memcpy(&buffer.tile_cache, renderer_tiles, sizeof(tRendererTile) * RENDERER_TILES_COUNT);
+    memcpy(&buffer.tile_cache, renderer_tiles, sizeof(tRendererTile) * renderer_tiles_count);
     buffer.not_rendered_at_all = false;
 }
 
@@ -378,7 +381,7 @@ void renderer_show_screen(tRendererScreenHandle screen_handle) {
 
 void renderer_show_video(tRendererVideoHandle video_handle,
                          rRendererVideoCallback callback,
-                         const void* callback_arg) {
+                         const void *callback_arg) {
     // configure video core
     vc_set_playback_mode(renderer_videos + video_handle,
                          callback, callback_arg);

@@ -7,7 +7,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include "ri-constants.h"
+//#include "ri-constants.h"
 
 #ifndef NULL
 #define NULL ((void*)0)
@@ -121,10 +121,22 @@ typedef struct tRendererScreenGraphics {
     uint32_t base;
 } tRendererScreenGraphics;
 
-extern tRendererText renderer_texts[RENDERER_TEXT_COUNT];
-extern tRendererTile renderer_tiles[RENDERER_TILES_COUNT];
-extern tRendererVideoDescriptor renderer_videos[RENDERER_VIDEO_COUNT];
-extern tRendererScreenGraphics renderer_graphics[RENDERER_GRAPHICS_COUNT];
+extern tRendererText* renderer_texts;
+extern uint16_t renderer_texts_count;
+
+extern tRendererTile* renderer_tiles;
+extern uint16_t renderer_tiles_count;
+
+extern tRendererVideoDescriptor* renderer_videos;
+extern uint16_t renderer_videos_count;
+
+extern tRendererScreenGraphics* renderer_graphics;
+extern uint16_t renderer_graphics_count;
+
+//extern tRendererText renderer_texts[RENDERER_TEXT_COUNT];
+//extern tRendererTile renderer_tiles[RENDERER_TILES_COUNT];
+//extern tRendererVideoDescriptor renderer_videos[RENDERER_VIDEO_COUNT];
+//extern tRendererScreenGraphics renderer_graphics[RENDERER_GRAPHICS_COUNT];
 
 extern const char *renderer_script;
 
