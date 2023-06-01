@@ -2,10 +2,9 @@
 // Created by tumap on 8/2/22.
 //
 #include <stdbool.h>
-#include <string.h>
-#include <stdio.h>
 #include <renderer-scene.h>
 #include <video-core.h>
+#include "memcpy.h"
 
 extern tRendererTileHandle root_tile;
 
