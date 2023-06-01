@@ -198,7 +198,7 @@ static eStatus handle_mode(uint8_t status) {
         if (!video_uploaded) {
             static int content_handle = -1;
             if (content_handle == -1) {
-                content_handle = open("impl/output/texture-intro.bin", O_RDONLY);
+                content_handle = open("impl1/texture-intro.bin", O_RDONLY);
                 if (content_handle < 0) {
                     perror("VideoContent load");
                     exit(1);
