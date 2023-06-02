@@ -21,6 +21,7 @@ tRendererText *renderer_texts;
 uint16_t renderer_texts_count;
 tRendererTile *renderer_tiles;
 uint16_t renderer_tiles_count;
+tRendererTileHandle *renderer_child_index;
 tRendererTileHandle *renderer_screens;
 uint16_t renderer_screen_count;
 tRendererVideoDescriptor *renderer_videos;
@@ -108,21 +109,16 @@ static bool decode_tiles() {
     unsigned i;
     for (i = 0; i < renderer_tiles_count; i++) {
         tRendererTile *tile = renderer_tiles + i;
-        // FIXME: decode tree structure field
-        tile->parent_tile = RENDERER_NULL_HANDLE;
-        tile->root_tile = i;
-        tile->children_count = 0;
-        tile->children_tiles = NULL;
 
-        // FIXME: decode tile visual properties
-        tile->overlapping_children = false;
-        tile->tile_visible = true;
-        tile->parent_visible = true;
-
-        // FIXME: decode texture
-        tile->rendering_mode = COLOR;
-
-        // FIXME: decode text properties
+        // decode tree structure field
+        if(!input_get_word(&tile->root_tile))
+            return false;
+        if(!input_get_word(&tile->parent_tile))
+            return false;
+        if(!input_get_word(&tile->children_count))
+            return false;
+        if(!input_get_word(&tile->children_list_index))
+            return false;
 
         // position
         if (!input_get_word(&tile->position_x))
@@ -151,6 +147,18 @@ static bool decode_tiles() {
         tile->color.blue = ((color >> 4) & 0x0f) * 17;
         tile->color.alpha = ((color >> 0) & 0x0f) * 17;
 
+
+
+        // FIXME: decode tile visual properties
+        tile->overlapping_children = false;
+        tile->tile_visible = true;
+        tile->parent_visible = true;
+
+        // FIXME: decode texture
+        tile->rendering_mode = COLOR;
+
+        // FIXME: decode text properties
+
     }
 
     return true;
@@ -162,12 +170,32 @@ static bool decode_screens() {
         return false;
 
     // allocate memory
-    renderer_screens= allocate(2*renderer_screen_count, 2);
+    renderer_screens = allocate(2 * renderer_screen_count, 2);
 
     // fill screen table
     int i;
     for (i = 0; i < renderer_screen_count; i++) {
         if (!input_get_word(renderer_screens + i))
+            return false;
+    }
+
+    return true;
+}
+
+static bool decode_child_index() {
+
+    // index records
+    uint16_t count;
+    if (!input_get_word(&count))
+        return false;
+
+    // allocate memory
+    renderer_child_index = allocate(count * 2, 2);
+
+    // fill index
+    int i;
+    for(i=0;i<count;i++) {
+        if(!input_get_word(renderer_child_index+i))
             return false;
     }
 
@@ -190,10 +218,14 @@ bool scene_decoder_decode() {
     if (!decode_screens())
         return false;
 
+    // decode node child index
+    if (!decode_child_index())
+        return false;
+
 
     // TODO: decode graphics contexts
     renderer_graphics_count = 1;
-    renderer_graphics= allocate(sizeof(tRendererScreenGraphics)*renderer_graphics_count, 4);
+    renderer_graphics = allocate(sizeof(tRendererScreenGraphics) * renderer_graphics_count, 4);
     renderer_graphics[0].data = NULL;
     renderer_graphics[0].length = 0;
     renderer_graphics[0].screen = 0;

@@ -11,7 +11,7 @@ static inline tRendererColor map_color(tRendererColorHandle handle);
 static void propagate_visibility(tRendererTileHandle tile_handle, bool visible) {
     unsigned i, count;
     tRendererTile *tile = renderer_tiles + tile_handle;
-    const tRendererTileHandle *children = tile->children_tiles;
+    const tRendererTileHandle *children = renderer_child_index + tile->children_list_index;
     for (i = 0, count = tile->children_count; i < count; i++, children++) {
         renderer_tiles[*children].parent_visible = visible;
         propagate_visibility(*children, visible && renderer_tiles[*children].tile_visible);

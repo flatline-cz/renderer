@@ -46,8 +46,8 @@ typedef struct tRendererTile {
     // tree
     tRendererTileHandle parent_tile;
     tRendererTileHandle root_tile;
-    tRendererTileHandle *children_tiles;
-    unsigned children_count;
+    uint16_t children_list_index;
+    uint16_t children_count;
     bool overlapping_children;
 
     // visibility
@@ -136,6 +136,8 @@ extern uint16_t renderer_texts_count;
 
 extern tRendererTile* renderer_tiles;
 extern uint16_t renderer_tiles_count;
+
+extern tRendererTileHandle* renderer_child_index;
 
 extern tRendererTileHandle* renderer_screens;
 extern uint16_t renderer_screen_count;

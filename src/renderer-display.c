@@ -240,7 +240,7 @@ static void redraw_tile(tVideoBuffer *buffer, tRendererTile *tile,
     // render all children
     unsigned i;
     for (i = 0; i < tile->children_count; i++) {
-        tRendererTile *child = renderer_tiles + tile->children_tiles[i];
+        tRendererTile *child = renderer_tiles + renderer_child_index[tile->children_list_index + i];
         if (child->tile_visible)
             redraw_tile(buffer, child, bounding_box, queue_data, queue_size, queue_length);
     }
@@ -268,7 +268,7 @@ static void render_tile(tVideoBuffer *buffer, tRendererTileHandle tile_handle,
         if (tile->tile_visible) {
             unsigned i;
             for (i = 0; i < tile->children_count; i++)
-                render_tile(buffer, tile->children_tiles[i],
+                render_tile(buffer, renderer_child_index[tile->children_list_index + i],
                             queue_data, queue_size, queue_length);
         }
     }
