@@ -13,7 +13,7 @@ void renderer_set_visibility(tRendererTileHandle tile, bool visible);
 void renderer_set_position(tRendererTileHandle tile_handle,
                            tRendererPosition left, tRendererPosition top);
 
-void renderer_set_color(tRendererTileHandle tile, tRendererColor color);
+void renderer_set_color(tRendererTileHandle tile, tRendererColorHandle color);
 
 void renderer_set_text(tRendererTileHandle tile, const char *text);
 

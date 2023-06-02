@@ -7,7 +7,6 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-//#include "ri-constants.h"
 
 #ifndef NULL
 #define NULL ((void*)0)
@@ -21,6 +20,8 @@ typedef uint16_t tRendererTileHandle;
 typedef uint16_t tRendererScreenHandle;
 
 typedef uint16_t tRendererVideoHandle;
+
+typedef uint16_t tRendererColorHandle;
 
 typedef struct tRendererColor {
     unsigned red: 8;
@@ -43,9 +44,9 @@ typedef struct tRendererTexture {
 
 typedef struct tRendererTile {
     // tree
-    const tRendererTileHandle parent_tile;
-    const tRendererTileHandle root_tile;
-    const tRendererTileHandle *children_tiles;
+    tRendererTileHandle parent_tile;
+    tRendererTileHandle root_tile;
+    tRendererTileHandle *children_tiles;
     unsigned children_count;
     bool overlapping_children;
 
@@ -53,7 +54,12 @@ typedef struct tRendererTile {
     bool tile_visible;
     bool parent_visible;
 
-    // position
+    // position (model related)
+    tRendererPosition position_x;
+    tRendererPosition position_y;
+    // TODO: alignment
+
+    // position (for rendering)
     tRendererPosition position_left;
     tRendererPosition position_right;
     tRendererPosition position_top;
@@ -65,6 +71,7 @@ typedef struct tRendererTile {
     eRendererTileMode rendering_mode;
 
     // color
+    tRendererColorHandle color_handle;
     tRendererColor color;
 
     // texture
@@ -121,22 +128,23 @@ typedef struct tRendererScreenGraphics {
     uint32_t base;
 } tRendererScreenGraphics;
 
+extern uint16_t* renderer_colors;
+extern uint16_t renderer_colors_simple_count;
+
 extern tRendererText* renderer_texts;
 extern uint16_t renderer_texts_count;
 
 extern tRendererTile* renderer_tiles;
 extern uint16_t renderer_tiles_count;
 
+extern tRendererTileHandle* renderer_screens;
+extern uint16_t renderer_screen_count;
+
 extern tRendererVideoDescriptor* renderer_videos;
 extern uint16_t renderer_videos_count;
 
 extern tRendererScreenGraphics* renderer_graphics;
 extern uint16_t renderer_graphics_count;
-
-//extern tRendererText renderer_texts[RENDERER_TEXT_COUNT];
-//extern tRendererTile renderer_tiles[RENDERER_TILES_COUNT];
-//extern tRendererVideoDescriptor renderer_videos[RENDERER_VIDEO_COUNT];
-//extern tRendererScreenGraphics renderer_graphics[RENDERER_GRAPHICS_COUNT];
 
 extern const char *renderer_script;
 

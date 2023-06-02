@@ -5,6 +5,8 @@
 #include "renderer-definition.h"
 
 
+static inline tRendererColor map_color(tRendererColorHandle handle);
+
 
 static void propagate_visibility(tRendererTileHandle tile_handle, bool visible) {
     unsigned i, count;
@@ -32,8 +34,9 @@ void renderer_set_position(tRendererTileHandle tile_handle,
     tile->position_bottom = top + tile->position_height - 1;
 }
 
-void renderer_set_color(tRendererTileHandle tile, tRendererColor color) {
-    renderer_tiles[tile].color = color;
+void renderer_set_color(tRendererTileHandle tile, tRendererColorHandle color) {
+    renderer_tiles[tile].color_handle = color;
+    renderer_tiles[tile].color = map_color(color);
 }
 
 static const uint32_t offsetsFromUTF8[6] = {
@@ -97,9 +100,9 @@ void renderer_set_text(tRendererTileHandle tile_handle, const char *text) {
         tile->position_height = glyph->height;
         tile->position_right = tile->position_left + tile->position_width - 1;
         tile->position_bottom = tile->position_top + tile->position_height - 1;
-        tile->texture.base=glyph->texture.base;
-        tile->texture.stripe_length=glyph->texture.stripe_length;
-        tile->texture.packed_alpha=glyph->texture.packed_alpha;
+        tile->texture.base = glyph->texture.base;
+        tile->texture.stripe_length = glyph->texture.stripe_length;
+        tile->texture.packed_alpha = glyph->texture.packed_alpha;
 
         x += glyph->advance_x;
 
@@ -123,4 +126,16 @@ void renderer_set_text(tRendererTileHandle tile_handle, const char *text) {
         tile->position_right += deltaX;
     }
 
+}
+
+static const tRendererColor default_color = {.red=0, .green=0, .blue=0, .alpha=255};
+
+static inline tRendererColor map_color(tRendererColorHandle handle) {
+    tRendererColor ret;
+    uint16_t color = renderer_colors[handle];
+    ret.red = ((color >> 12) & 0x0f) * 17;
+    ret.green = ((color >> 8) & 0x0f) * 17;
+    ret.blue = ((color >> 4) & 0x0f) * 17;
+    ret.alpha = ((color >> 0) & 0x0f) * 17;
+    return ret;
 }

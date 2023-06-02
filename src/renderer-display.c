@@ -15,9 +15,9 @@ static uint8_t tile_cache_mem[8 * 1024];
 // used for detecting the changes as only these are actually rendered
 typedef struct tVideoBuffer {
     bool not_rendered_at_all;
-    tRendererTile *tile_cache;
+    tRendererTile tile_cache[300];
 } tVideoBuffer;
-static tVideoBuffer buffer = {.not_rendered_at_all =true, .tile_cache=(tRendererTile *) tile_cache_mem};
+static tVideoBuffer buffer;
 
 tRendererTileHandle root_tile = RENDERER_NULL_HANDLE;
 
@@ -372,11 +372,14 @@ void renderer_show_screen(tRendererScreenHandle screen_handle) {
     // FIXME: find graphics context
     vc_set_render_mode(renderer_graphics + 0);
 
+    if (screen_handle < renderer_screen_count) {
+        tRendererTileHandle screen_tile = renderer_screens[screen_handle];
 
-    if (screen_handle == root_tile)
-        return;
-    root_tile = screen_handle;
-    buffer.not_rendered_at_all = true;
+        if (screen_tile == root_tile)
+            return;
+        root_tile = screen_tile;
+        buffer.not_rendered_at_all = true;
+    }
 }
 
 void renderer_show_video(tRendererVideoHandle video_handle,

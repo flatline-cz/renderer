@@ -272,11 +272,13 @@ static eStatus handle_rendering(uint8_t status) {
     if (current_rendering_context != target_rendering_context) {
         current_rendering_context = target_rendering_context;
 
-        upload_data(current_rendering_context->data,
-                    current_rendering_context->base,
-                    current_rendering_context->length);
+        if (current_rendering_context->length != 0) {
+            upload_data(current_rendering_context->data,
+                        current_rendering_context->base,
+                        current_rendering_context->length);
 
-        TRACE("Textures uploaded")
+            TRACE("Textures uploaded")
+        }
 
         return RETURN_TRUE;
     }

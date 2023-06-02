@@ -7,6 +7,6 @@
 
 #include <stdbool.h>
 
-void scene_decoder_decode();
+bool scene_decoder_decode();
 
 #endif //HEAD_UNIT_DECODER_H
