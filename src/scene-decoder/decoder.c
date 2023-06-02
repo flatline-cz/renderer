@@ -111,19 +111,19 @@ static bool decode_tiles() {
         tRendererTile *tile = renderer_tiles + i;
 
         // decode tree structure field
-        if(!input_get_word(&tile->root_tile))
+        if (!input_get_word(&tile->root_tile))
             return false;
-        if(!input_get_word(&tile->parent_tile))
+        if (!input_get_word(&tile->parent_tile))
             return false;
-        if(!input_get_word(&tile->children_count))
+        if (!input_get_word(&tile->children_count))
             return false;
-        if(!input_get_word(&tile->children_list_index))
+        if (!input_get_word(&tile->children_list_index))
             return false;
 
         // position
-        if (!input_get_word(&tile->position_x))
+        if (!input_get_word(&tile->position_left))
             return false;
-        if (!input_get_word(&tile->position_y))
+        if (!input_get_word(&tile->position_top))
             return false;
         if (!input_get_word(&tile->position_width))
             return false;
@@ -131,9 +131,6 @@ static bool decode_tiles() {
             return false;
 
         // update rendering position
-        // FIXME:
-        tile->position_left = tile->position_x;
-        tile->position_top = tile->position_y;
         tile->position_right = tile->position_left + tile->position_width - 1;
         tile->position_bottom = tile->position_top + tile->position_height - 1;
 
@@ -194,8 +191,8 @@ static bool decode_child_index() {
 
     // fill index
     int i;
-    for(i=0;i<count;i++) {
-        if(!input_get_word(renderer_child_index+i))
+    for (i = 0; i < count; i++) {
+        if (!input_get_word(renderer_child_index + i))
             return false;
     }
 

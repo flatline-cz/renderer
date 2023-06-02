@@ -54,11 +54,6 @@ typedef struct tRendererTile {
     bool tile_visible;
     bool parent_visible;
 
-    // position (model related)
-    tRendererPosition position_x;
-    tRendererPosition position_y;
-    // TODO: alignment
-
     // position (for rendering)
     tRendererPosition position_left;
     tRendererPosition position_right;
