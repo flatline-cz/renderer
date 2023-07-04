@@ -20,6 +20,7 @@ typedef struct tVideoBuffer {
 static tVideoBuffer buffer;
 
 tRendererTileHandle root_tile = RENDERER_NULL_HANDLE;
+tRendererGraphicsHandle graphics_handle = RENDERER_NULL_HANDLE;
 
 
 static void update_tile_cache();
@@ -369,17 +370,22 @@ static void vc_cmd_rect_texture(tRendererPosition left,
 }
 
 void renderer_show_screen(tRendererScreenHandle screen_handle) {
-    // FIXME: find graphics context
-    vc_set_render_mode(renderer_graphics + 0);
+    if (screen_handle >= renderer_screen_count)
+        return;
 
-    if (screen_handle < renderer_screen_count) {
-        tRendererTileHandle screen_tile = renderer_screens[screen_handle];
+    // screen definition
+    tRendererScreen *screen = renderer_screens + screen_handle;
 
-        if (screen_tile == root_tile)
-            return;
-        root_tile = screen_tile;
-        buffer.not_rendered_at_all = true;
+    // graphics changes?
+    if (graphics_handle != screen->graphics) {
+        graphics_handle = screen->graphics;
+        vc_set_render_mode(renderer_graphics + graphics_handle);
     }
+
+    if (screen->root_tile == root_tile)
+        return;
+    root_tile = screen->root_tile;
+    buffer.not_rendered_at_all = true;
 }
 
 void renderer_show_video(tRendererVideoHandle video_handle,

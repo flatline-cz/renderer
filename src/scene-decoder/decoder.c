@@ -22,7 +22,7 @@ uint16_t renderer_texts_count;
 tRendererTile *renderer_tiles;
 uint16_t renderer_tiles_count;
 tRendererTileHandle *renderer_child_index;
-tRendererTileHandle *renderer_screens;
+tRendererScreen *renderer_screens;
 uint16_t renderer_screen_count;
 tRendererVideoDescriptor *renderer_videos;
 uint16_t renderer_videos_count;
@@ -144,15 +144,40 @@ static bool decode_tiles() {
         tile->color.blue = ((color >> 4) & 0x0f) * 17;
         tile->color.alpha = ((color >> 0) & 0x0f) * 17;
 
+        // decode tile type
+        uint8_t tile_type;
+        if (!input_get_byte(&tile_type))
+            return false;
+        switch (tile_type) {
+            case 0:
+                tile->rendering_mode = COLOR;
+                break;
+            case 1:
+                tile->rendering_mode = ALPHA_TEXTURE;
+                break;
+            default:
+                return false;
+        }
 
+        // decode texture properties
+        if (tile_type == 1) {
+            if (!input_get_dword(&tile->texture.base))
+                return false;
+            if (!input_get_word(&tile->texture.stripe_length))
+                return false;
+            uint8_t texture_compression;
+            if (!input_get_byte(&texture_compression))
+                return false;
+            if (texture_compression >= 2)
+                return false;
+            tile->texture.packed_alpha = (texture_compression == 1);
+        }
 
         // FIXME: decode tile visual properties
         tile->overlapping_children = false;
         tile->tile_visible = true;
         tile->parent_visible = true;
 
-        // FIXME: decode texture
-        tile->rendering_mode = COLOR;
 
         // FIXME: decode text properties
 
@@ -167,12 +192,14 @@ static bool decode_screens() {
         return false;
 
     // allocate memory
-    renderer_screens = allocate(2 * renderer_screen_count, 2);
+    renderer_screens = allocate(sizeof(tRendererScreen) * renderer_screen_count, 2);
 
     // fill screen table
     int i;
     for (i = 0; i < renderer_screen_count; i++) {
-        if (!input_get_word(renderer_screens + i))
+        if (!input_get_word(&renderer_screens[i].root_tile))
+            return false;
+        if (!input_get_word(&renderer_screens[i].graphics))
             return false;
     }
 
@@ -223,13 +250,12 @@ bool scene_decoder_decode() {
     // TODO: decode graphics contexts
     renderer_graphics_count = 1;
     renderer_graphics = allocate(sizeof(tRendererScreenGraphics) * renderer_graphics_count, 4);
-    renderer_graphics[0].data = NULL;
-    renderer_graphics[0].length = 0;
-    renderer_graphics[0].screen = 0;
+    renderer_graphics[0].data = graphics_data;
+    renderer_graphics[0].length = graphics_data_length;
     renderer_graphics[0].base = 0;
 
 
-    renderer_graphics_count = 0;
+    renderer_graphics_count = 1;
     renderer_texts_count = 0;
     renderer_videos_count = 0;
 

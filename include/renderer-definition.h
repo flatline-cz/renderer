@@ -19,6 +19,8 @@ typedef uint16_t tRendererTileHandle;
 
 typedef uint16_t tRendererScreenHandle;
 
+typedef uint16_t tRendererGraphicsHandle;
+
 typedef uint16_t tRendererVideoHandle;
 
 typedef uint16_t tRendererColorHandle;
@@ -117,30 +119,34 @@ typedef struct tRendererVideoDescriptor {
 } tRendererVideoDescriptor;
 
 typedef struct tRendererScreenGraphics {
-    tRendererScreenHandle screen;
     const uint8_t *data;
     uint32_t length;
     uint32_t base;
 } tRendererScreenGraphics;
 
-extern uint16_t* renderer_colors;
+typedef struct tRendererScreen {
+    tRendererGraphicsHandle graphics;
+    tRendererTileHandle root_tile;
+} tRendererScreen;
+
+extern uint16_t *renderer_colors;
 extern uint16_t renderer_colors_simple_count;
 
-extern tRendererText* renderer_texts;
+extern tRendererText *renderer_texts;
 extern uint16_t renderer_texts_count;
 
-extern tRendererTile* renderer_tiles;
+extern tRendererTile *renderer_tiles;
 extern uint16_t renderer_tiles_count;
 
-extern tRendererTileHandle* renderer_child_index;
+extern tRendererTileHandle *renderer_child_index;
 
-extern tRendererTileHandle* renderer_screens;
+extern tRendererScreen *renderer_screens;
 extern uint16_t renderer_screen_count;
 
-extern tRendererVideoDescriptor* renderer_videos;
+extern tRendererVideoDescriptor *renderer_videos;
 extern uint16_t renderer_videos_count;
 
-extern tRendererScreenGraphics* renderer_graphics;
+extern tRendererScreenGraphics *renderer_graphics;
 extern uint16_t renderer_graphics_count;
 
 extern const char *renderer_script;
