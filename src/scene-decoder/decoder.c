@@ -8,6 +8,14 @@
 
 #include "definition.h"
 
+#ifndef _PIC32
+#   include <stdio.h>
+#   include "profile.h"
+#   define TRACE(msg, ...) fprintf(stderr, "%d.%03ds : "  msg  "\n", TIME_GET/1000, TIME_GET%1000, ##__VA_ARGS__);
+#else
+#   define TRACE(msg, ...)
+#endif
+
 static uint32_t input_position;
 
 #define SCENE_MEMORY_KB                 16
@@ -228,6 +236,7 @@ static bool decode_child_index() {
 
 
 bool scene_decoder_decode() {
+    TRACE("Decoding started")
     input_init();
 
     // create color table
@@ -259,5 +268,6 @@ bool scene_decoder_decode() {
     renderer_texts_count = 0;
     renderer_videos_count = 0;
 
+    TRACE("Decoding finished, memory used = %d bytes", memory_size)
     return true;
 }
