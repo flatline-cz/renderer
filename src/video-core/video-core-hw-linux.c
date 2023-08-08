@@ -7,8 +7,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include "profile.h"
-
-#define TRACE(msg, ...) fprintf(stderr, "%d.%03ds : "  msg  "\n", TIME_GET/1000, TIME_GET%1000, ##__VA_ARGS__);
+#include "trace.h"
 
 // FPGA bit stream
 extern const unsigned char FPGA_bit_stream[];

@@ -7,16 +7,8 @@
 #include <video-core-hw.h>
 #include <spi-flash.h>
 #include "system-config.h"
+#include "trace.h"
 
-#ifndef PIC32
-#include <stdlib.h>
-#include <stdio.h>
-#include <fcntl.h>
-#include <unistd.h>
-#define TRACE(msg, ...) fprintf(stderr, "%d.%03ds : "  msg  "\n", TIME_GET/1000, TIME_GET%1000, ##__VA_ARGS__);
-#else
-#define TRACE(msg, ...)
-#endif
 
 // *******************************************
 // **  VIDEO CORE POLL CONTEXT              **

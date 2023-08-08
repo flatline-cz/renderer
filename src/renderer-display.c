@@ -52,14 +52,6 @@ static void vc_cmd_rect_texture(tRendererPosition left,
                                 uint16_t max_length,
                                 uint16_t *length);
 
-void renderer_show_screen_old(tRendererTileHandle tile) {
-    if (root_tile != tile) {
-        root_tile = tile;
-        // FIXME
-//        renderer_init();
-    }
-}
-
 
 typedef struct tRectangle {
     tRendererPosition x1;

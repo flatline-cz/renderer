@@ -1,7 +1,7 @@
 //
 // Created by tumap on 12/6/22.
 //
-#include <renderer-idle.h>
+#include "renderer-idle.h"
 #ifdef PIC32
 #include "memcpy.h"
 #else
@@ -73,8 +73,9 @@ void renderer_idle_register(tTime period, rRendererIdleRoutine routine, void *ro
     if (period < 10)
         period = 10;
     // FIXME: error handling
-    if (!routine)
+    if (!routine) {
         return;
+    }
 
     // routine already exists?
     int index = find_routine(routine, routine_arg);
