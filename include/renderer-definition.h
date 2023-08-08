@@ -119,7 +119,6 @@ typedef struct tRendererVideoDescriptor {
 } tRendererVideoDescriptor;
 
 typedef struct tRendererScreenGraphics {
-    const uint8_t *data;
     uint32_t length;
     uint32_t base;
 } tRendererScreenGraphics;

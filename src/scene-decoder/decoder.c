@@ -2,21 +2,26 @@
 // Created by tumap on 6/1/23.
 //
 #include <stdbool.h>
-#include <stdint.h>
 #include "decoder.h"
 #include "renderer-definition.h"
+#include "spi-flash.h"
+#include "system-config.h"
 
-#include "definition.h"
+#ifndef PIC32
 
-#ifndef _PIC32
 #   include <stdio.h>
 #   include "profile.h"
+
 #   define TRACE(msg, ...) fprintf(stderr, "%d.%03ds : "  msg  "\n", TIME_GET/1000, TIME_GET%1000, ##__VA_ARGS__);
 #else
 #   define TRACE(msg, ...)
 #endif
 
+#define BUFFER_LENGTH                   256
+static uint8_t input_buffer[BUFFER_LENGTH];
+static uint32_t input_buffer_start;
 static uint32_t input_position;
+static uint32_t input_data_length;
 
 #define SCENE_MEMORY_KB                 16
 #define SCENE_MEMORY                    ((SCENE_MEMORY_KB)*1024)
@@ -38,7 +43,14 @@ tRendererScreenGraphics *renderer_graphics;
 uint16_t renderer_graphics_count;
 
 static inline void input_init() {
-    input_position = 0;
+    input_position = 4;
+    input_buffer_start = 0;
+    spi_flash_read_sync(FLASH_BANK_SCENE, 0, input_buffer, BUFFER_LENGTH);
+    input_data_length =
+            (((uint32_t) input_buffer[0]) << 0) |
+            (((uint32_t) input_buffer[1]) << 8) |
+            (((uint32_t) input_buffer[2]) << 16) |
+            (((uint32_t) input_buffer[3]) << 24);
     memory_size = 0;
 }
 
@@ -59,32 +71,47 @@ static inline void *__attribute((always_inline)) allocate(unsigned size, unsigne
 }
 
 static inline bool input_get_byte(uint8_t *buffer) {
-    if (input_position < renderer_data_length) {
-        *buffer = renderer_data[input_position++];
-        return true;
+    if (input_position >= input_data_length)
+        return false;
+    if (input_position - input_buffer_start >= BUFFER_LENGTH) {
+        input_buffer_start += BUFFER_LENGTH;
+        spi_flash_read_sync(FLASH_BANK_SCENE, input_buffer_start, input_buffer, BUFFER_LENGTH);
     }
-    return false;
+    *buffer = input_buffer[input_position - input_buffer_start];
+    input_position++;
+    return true;
 }
 
 static inline bool input_get_word(uint16_t *buffer) {
-    if (input_position + 1 < renderer_data_length) {
-        *buffer = (((uint16_t) renderer_data[input_position + 1]) << 8) | renderer_data[input_position];
-        input_position += 2;
-        return true;
-    }
-    return false;
+    uint8_t b1;
+    uint8_t b2;
+    if (!input_get_byte(&b1))
+        return false;
+    if (!input_get_byte(&b2))
+        return false;
+    *buffer = (((uint16_t) b2) << 8) | b1;
+    return true;
 }
 
 static inline bool input_get_dword(uint32_t *buffer) {
-    if (input_position + 3 < renderer_data_length) {
-        *buffer = (((uint32_t) renderer_data[input_position + 3]) << 24) |
-                  (((uint32_t) renderer_data[input_position + 2]) << 16) |
-                  (((uint32_t) renderer_data[input_position + 1]) << 8) |
-                  renderer_data[input_position];
-        input_position += 4;
-        return true;
-    }
-    return false;
+    uint8_t b1;
+    uint8_t b2;
+    uint8_t b3;
+    uint8_t b4;
+    if (!input_get_byte(&b1))
+        return false;
+    if (!input_get_byte(&b2))
+        return false;
+    if (!input_get_byte(&b3))
+        return false;
+    if (!input_get_byte(&b4))
+        return false;
+    *buffer =
+            (((uint32_t) b1) << 0) |
+            (((uint32_t) b2) << 8) |
+            (((uint32_t) b3) << 16) |
+            (((uint32_t) b4) << 24);
+    return true;
 }
 
 static bool decode_color_table() {
@@ -137,6 +164,10 @@ static bool decode_tiles() {
             return false;
         if (!input_get_word(&tile->position_height))
             return false;
+        uint8_t visible;
+        if (!input_get_byte(&visible))
+            return false;
+        tile->tile_visible = visible == 1;
 
         // update rendering position
         tile->position_right = tile->position_left + tile->position_width - 1;
@@ -183,7 +214,6 @@ static bool decode_tiles() {
 
         // FIXME: decode tile visual properties
         tile->overlapping_children = false;
-        tile->tile_visible = true;
         tile->parent_visible = true;
 
 
@@ -234,6 +264,29 @@ static bool decode_child_index() {
     return true;
 }
 
+static bool decode_texture_bundles() {
+
+    // count
+    if (!input_get_word(&renderer_graphics_count))
+        return false;
+
+    // allocate memory
+    renderer_graphics = allocate(renderer_graphics_count, 4);
+
+    int i;
+
+    // read each record
+    for (i = 0; i < renderer_graphics_count; i++) {
+        if (!input_get_dword(&renderer_graphics[i].base))
+            return false;
+
+        if (!input_get_dword(&renderer_graphics[i].length))
+            return false;
+    }
+
+    return true;
+}
+
 
 bool scene_decoder_decode() {
     TRACE("Decoding started")
@@ -255,16 +308,11 @@ bool scene_decoder_decode() {
     if (!decode_child_index())
         return false;
 
+    //decode graphics contexts
+    if (!decode_texture_bundles())
+        return false;
 
-    // TODO: decode graphics contexts
-    renderer_graphics_count = 1;
-    renderer_graphics = allocate(sizeof(tRendererScreenGraphics) * renderer_graphics_count, 4);
-    renderer_graphics[0].data = graphics_data;
-    renderer_graphics[0].length = graphics_data_length;
-    renderer_graphics[0].base = 0;
-
-
-    renderer_graphics_count = 1;
+    // TODO:
     renderer_texts_count = 0;
     renderer_videos_count = 0;
 

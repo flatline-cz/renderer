@@ -2,7 +2,12 @@
 // Created by tumap on 12/6/22.
 //
 #include <renderer-idle.h>
+#ifdef PIC32
+#include "memcpy.h"
+#else
 #include <string.h>
+#endif
+
 
 #define MAX_IDLE_ROUTINES           32
 
@@ -73,7 +78,7 @@ void renderer_idle_register(tTime period, rRendererIdleRoutine routine, void *ro
 
     // routine already exists?
     int index = find_routine(routine, routine_arg);
-    tIdleRoutineContext *ctx = (index >= 0) ? (contexts + index) : NULL;
+    tIdleRoutineContext *ctx = (index >= 0) ? (contexts + index) : 0;
     if (ctx) {
         int32_t delta = (int32_t) period - (int32_t) ctx->period;
         ctx->period = period;
