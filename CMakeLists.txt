@@ -4,6 +4,8 @@ set(RENDERER_SOURCES
         ${CMAKE_CURRENT_LIST_DIR}/src/renderer-scene.c
         ${CMAKE_CURRENT_LIST_DIR}/binding/binding-idle.c
         ${CMAKE_CURRENT_LIST_DIR}/binding/binding-gpio.c
+        ${CMAKE_CURRENT_LIST_DIR}/binding/binding-canbus.c
+        ${CMAKE_CURRENT_LIST_DIR}/binding/binding-canbus-register.c
         ${CMAKE_CURRENT_LIST_DIR}/src/renderer.c
         ${CMAKE_CURRENT_LIST_DIR}/src/video-core/video-core.c
         ${CMAKE_CURRENT_LIST_DIR}/src/video-core/fpga-bit-stream.c
