@@ -1,11 +1,15 @@
 //
 // Created by tumap on 12/6/22.
 //
-#include "renderer-idle.h"
+#include "binding-idle.h"
+#include <trace.h>
+
 #ifdef PIC32
 #include "memcpy.h"
 #else
+
 #include <string.h>
+
 #endif
 
 
@@ -32,13 +36,13 @@ static int find_routine(rRendererIdleRoutine routine, void *routine_arg);
 static void find_nearest_context();
 
 
-void renderer_idle_init() {
+void binding_idle_init() {
     context_count = 0;
     next_context = 0;
 }
 
 
-bool renderer_idle_handle() {
+bool binding_idle_handle() {
     // no contexts registered?
     if (!context_count)
         return false;
@@ -68,13 +72,23 @@ bool renderer_idle_handle() {
     return true;
 }
 
-void renderer_idle_register(tTime period, rRendererIdleRoutine routine, void *routine_arg) {
+void binding_idle_register(tTime period, rRendererIdleRoutine routine, void *routine_arg) {
     // sanity check
-    if (period < 10)
-        period = 10;
-    // FIXME: error handling
-    if (!routine) {
+    if (period < 10) {
+        TRACE("IDLE-BINDING: invalid params (short period)")
+#ifdef PIC32
         return;
+#else
+        abort();
+#endif
+    }
+    if (!routine) {
+        TRACE("IDLE-BINDING: invalid params (missing routine)")
+#ifdef PIC32
+        return;
+#else
+        abort();
+#endif
     }
 
     // routine already exists?
@@ -85,9 +99,15 @@ void renderer_idle_register(tTime period, rRendererIdleRoutine routine, void *ro
         ctx->period = period;
         ctx->scheduled_invocation += delta;
     } else {
-        // TODO: error handling
-        if (context_count + 1 > MAX_IDLE_ROUTINES)
+        // error handling
+        if (context_count + 1 > MAX_IDLE_ROUTINES) {
+            TRACE("IDLE-BINDING: Too many routines")
+#ifdef PIC32
             return;
+#else
+            abort();
+#endif
+        }
         ctx = contexts + context_count;
         context_count++;
         ctx->period = period;
@@ -100,7 +120,7 @@ void renderer_idle_register(tTime period, rRendererIdleRoutine routine, void *ro
     find_nearest_context();
 }
 
-void renderer_idle_deregister(rRendererIdleRoutine routine, void *routine_arg) {
+void binding_idle_deregister(rRendererIdleRoutine routine, void *routine_arg) {
     int index = find_routine(routine, routine_arg);
     if (index < 0)
         return;

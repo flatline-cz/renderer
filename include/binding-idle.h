@@ -9,14 +9,14 @@
 #include <stdint.h>
 #include <profile.h>
 
-void renderer_idle_init();
+void binding_idle_init();
 
-bool renderer_idle_handle();
+bool binding_idle_handle();
 
 typedef void (*rRendererIdleRoutine)(tTime time, void* arg);
 
-void renderer_idle_register(tTime period, rRendererIdleRoutine routine, void* routine_arg);
+void binding_idle_register(tTime period, rRendererIdleRoutine routine, void* routine_arg);
 
-void renderer_idle_deregister(rRendererIdleRoutine routine, void* routine_arg);
+void binding_idle_deregister(rRendererIdleRoutine routine, void* routine_arg);
 
 #endif //DASHBOARD_RENDERER_IDLE_H
