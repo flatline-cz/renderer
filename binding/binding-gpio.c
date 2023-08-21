@@ -27,6 +27,7 @@ void binding_gpio_init() {
 }
 
 bool binding_gpio_handle() {
+    bool state=false;
     uint32_t keys = platform_gpio_get_state();
     int key;
     for (key = 0; key < PLATFORM_GPIO_BUTTONS && keys != 0; key++) {
@@ -39,12 +40,14 @@ bool binding_gpio_handle() {
                 if (bindings[key][level].routine(
                         key,
                         GPIO_BINDING_SHORT_PRESS,
-                        bindings[key][level].arg))
+                        bindings[key][level].arg)) {
+                    state=true;
                     break;
+                }
             }
         }
     }
-    return true;
+    return state;
 }
 
 void binding_gpio_register(unsigned key, rRendererGpioRoutine routine, void *arg) {
