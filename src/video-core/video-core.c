@@ -135,10 +135,12 @@ void vc_set_display_off() {
 static uint8_t command_queue[MAX_QUEUE_LENGTH];
 
 static uint8_t query_status() {
-    if(!video_core_hw_idle())
+    if (!video_core_hw_idle())
         return 0;
     static uint8_t data[3];
     data[0] = 0;
+    data[1] = 0xff;
+    data[2] = 0xff;
     video_core_hw_exchange(data, data, 3);
     return data[2];
 }
@@ -368,7 +370,7 @@ static inline void render_texture_upload() {
     // uploading buffer B?
     if (render_state == RENDER_STATE_UPLOAD_TEXTURE_B) {
         // have something more to read (to buffer A)?
-        if (texture_length!=0) {
+        if (texture_length != 0) {
             // transfer not initialized yet?
             if (texture_requestA.status == SPI_FLASH_IDLE) {
                 // initialize
@@ -473,6 +475,8 @@ static eStatus handle_playback(uint8_t status) {
 }
 
 bool vc_handle() {
+    if (!video_core_hw_idle())
+        return false;
     // polling?
     if (next_poll_time > TIME_GET)
         return false;
