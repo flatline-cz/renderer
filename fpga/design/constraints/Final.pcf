@@ -1,0 +1,100 @@
+set_frequency w_pixel_clk 65.25
+set_frequency w_master_clk 50.35
+
+set_io clk 94
+
+set_io vsync_o 137
+set_io hsync_o 141
+
+set_io red[0] 110
+set_io red[1] 112
+set_io red[2] 113 
+set_io red[3] 114
+set_io red[4] 115
+set_io red[5] 107
+set_io red[6] 116
+set_io red[7] 117
+
+set_io blue[0] 129
+set_io blue[1] 130
+set_io blue[2] 144
+set_io blue[3] 134
+set_io blue[4] 143
+set_io blue[5] 135
+set_io blue[6] 142
+set_io blue[7] 136
+
+set_io green[0] 118
+set_io green[1] 119
+set_io green[2] 120
+set_io green[3] 121
+set_io green[4] 122
+set_io green[5] 124
+set_io green[6] 125
+set_io green[7] 128
+
+set_io M1D[0] 11
+set_io M1D[1] 12
+set_io M1D[2] 15
+set_io M1D[3] 16
+set_io M1D[4] 17
+set_io M1D[5] 19
+set_io M1D[6] 18
+set_io M1D[7] 42
+set_io M1D[8] 33
+set_io M1D[9] 34
+set_io M1D[10] 38
+set_io M1D[11] 37
+set_io M1D[12] 1
+set_io M1D[13] 2
+set_io M1D[14] 3
+set_io M1D[15] 4
+set_io M1D[16] 73
+set_io M1D[17] 74
+set_io M1D[18] 75
+set_io M1D[19] 76
+set_io M1D[20] 78
+set_io M1D[21] 79
+set_io M1D[22] 80
+set_io M1D[23] 81
+set_io M1D[24] 82
+set_io M1D[25] 83
+set_io M1D[26] 84
+set_io M1D[27] 85
+set_io M1D[28] 52
+set_io M1D[29] 47
+set_io M1D[30] 45
+set_io M1D[31] 41
+
+set_io M1A[0] 31
+set_io M1A[1] 10
+set_io M1A[2] 9
+set_io M1A[3] 8
+set_io M1A[4] 7
+set_io M1A[5] 48
+set_io M1A[6] 49
+set_io M1A[7] 61
+set_io M1A[8] 39
+set_io M1A[9]  32
+set_io M1A[10] 29
+set_io M1A[11] 28
+set_io M1A[12] 62
+set_io M1A[13] 44
+set_io M1A[14] 43
+set_io M1A[15] 20
+set_io M1A[16] 21
+set_io M1A[17] 22
+set_io M1A[18] 23
+set_io M1A[19] 24 
+
+set_io M1CS 26
+set_io M1OE 87
+set_io M1WE 25
+
+set_io SPI_CS_n 71
+set_io SPI_CLK 70
+set_io SPI_MISO 67
+set_io SPI_MOSI 68
+
+set_io PWR_VGL 90
+set_io PWR_VGH 101

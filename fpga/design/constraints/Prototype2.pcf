@@ -1,0 +1,92 @@
+
+set_frequency w_pixel_clk 65.25
+set_frequency w_master_clk 50.35
+
+set_io clk J3
+
+set_io vsync_o B16
+set_io hsync_o C16
+
+set_io red[4] H14
+set_io red[5] A6
+set_io red[6] C6
+set_io red[7] G15
+
+set_io blue[4] D15
+set_io blue[5] E16
+set_io blue[6] D14
+set_io blue[7] D16
+
+set_io green[4] B6
+set_io green[5] A5
+set_io green[6] F15
+set_io green[7] E14
+
+set_io M1D[0] N10
+set_io M1D[1] N12
+set_io M1D[2] T14
+set_io M1D[3] T13
+set_io M1D[4] R3
+set_io M1D[5] R4
+set_io M1D[6] R2
+set_io M1D[7] T3
+set_io M1D[8] D2
+set_io M1D[9] F1
+set_io M1D[10] G1
+set_io M1D[11] H1
+set_io M1D[12] R5
+set_io M1D[13] T5
+set_io M1D[14] R6
+set_io M1D[15] T6
+set_io M1D[16] T16
+set_io M1D[17] T15
+set_io M1D[18] R16
+set_io M1D[19] K3
+set_io M1D[20] P1
+set_io M1D[21] N3
+set_io M1D[22] M2
+set_io M1D[23] L3
+
+set_io M1A[0] P9
+set_io M1A[1] T9
+set_io M1A[2] R9
+set_io M1A[3] T7
+set_io M1A[4] T8
+set_io M1A[5] C2
+set_io M1A[6] B2
+set_io M1A[7] B1
+set_io M1A[8] C1
+set_io M1A[9] D1
+set_io M1A[10] G2
+set_io M1A[11] H2
+set_io M1A[12] J2
+set_io M1A[13] T2
+set_io M1A[14] T1
+set_io M1A[15] M11
+set_io M1A[16] T11
+set_io M1A[17] P10
+set_io M1A[18] T10
+set_io M1A[19] R10
+
+set_io M1CS F2
+set_io M1OE E2
+set_io M1WE P8
+
+set_io LED[0] B5
+set_io LED[1] B4
+set_io LED[2] A2
+set_io LED[3] A1
+set_io LED[4] C5
+set_io LED[5] C4
+set_io LED[6] B3
+set_io LED[7] C3
+
+#set_io uart_rx B10
+#set_io uart_tx B12
+
+set_io SPI_CS_n R12
+set_io SPI_CLK R11
+set_io SPI_MISO P12
+set_io SPI_MOSI P11
+
+set_io FCEn N16
