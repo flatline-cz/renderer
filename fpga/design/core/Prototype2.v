@@ -56,7 +56,7 @@ module FPGA (
     PLL_65_25 pixel_clock_pll (
             .RESET(1'b1),
             .REFERENCECLK(clk),
-            .PLLOUTGLOBAL(w_pixel_clk),
+            .PLLOUTGLOBAL(w_pixel_clk)
         );
     localparam PIXEL_FREQ = 65250000;
 
@@ -65,7 +65,7 @@ module FPGA (
     PLL_50_35 master_clock_pll (
             .RESET(1'b1),
             .REFERENCECLK(clk),
-            .PLLOUTGLOBAL(w_master_clk),
+            .PLLOUTGLOBAL(w_master_clk)
         );
     localparam MASTER_FREQ = 50350000;
 
@@ -84,7 +84,7 @@ module FPGA (
         );
 
     // VideoCore instance
-    VideoCore2 #(
+    VideoCore #(
             .MASTER_FREQ(MASTER_FREQ),
             .BOUD_RATE(BOUD_RATE)
         ) video_core (

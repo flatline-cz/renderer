@@ -14,11 +14,9 @@ set(RENDERER_SOURCES
 )
 
 set(FPGA_SOURCES
-#        ${CMAKE_CURRENT_LIST_DIR}/fpga/design/core/Final.v
         ${CMAKE_CURRENT_LIST_DIR}/fpga/design/clock/Clock-65_25.v
         ${CMAKE_CURRENT_LIST_DIR}/fpga/design/clock/Clock-50_35.v
-        ${CMAKE_CURRENT_LIST_DIR}/fpga/design/core/VideoCore2.v
-        ${CMAKE_CURRENT_LIST_DIR}/fpga/design/video/VideoTimingController.v
+        ${CMAKE_CURRENT_LIST_DIR}/fpga/design/core/VideoCore.v
         ${CMAKE_CURRENT_LIST_DIR}/fpga/design/video/VideoRowBuffer.v
         ${CMAKE_CURRENT_LIST_DIR}/fpga/design/video/PlaybackController.v
         ${CMAKE_CURRENT_LIST_DIR}/fpga/design/video/VideoDecoder2.v
@@ -32,7 +30,6 @@ set(FPGA_SOURCES
         ${CMAKE_CURRENT_LIST_DIR}/fpga/design/system/FIFO.v
         ${CMAKE_CURRENT_LIST_DIR}/fpga/design/memory/VRAMController.v
         ${CMAKE_CURRENT_LIST_DIR}/fpga/design/renderer/CommandProcessor.v
-        ${CMAKE_CURRENT_LIST_DIR}/fpga/design/memory/FLASHControllerMock.v
         ${CMAKE_CURRENT_LIST_DIR}/fpga/design/renderer/Renderer.v
         ${CMAKE_CURRENT_LIST_DIR}/fpga/design/renderer/RendererMixer.v
         ${CMAKE_CURRENT_LIST_DIR}/fpga/design/renderer/RendererRectFill.v
@@ -52,6 +49,8 @@ if (DEFINED PIC32)
     set(FPGA_PACKAGE "tq144")
     list(APPEND FPGA_SOURCES
             ${CMAKE_CURRENT_LIST_DIR}/fpga/design/core/Final.v
+            ${CMAKE_CURRENT_LIST_DIR}/fpga/design/clock/Clock-51_00.v
+            ${CMAKE_CURRENT_LIST_DIR}/fpga/design/video/VideoTimingControllerTFT.v
     )
 else ()
     # C sources
@@ -64,6 +63,7 @@ else ()
     set(FPGA_PACKAGE "ct256")
     list(APPEND FPGA_SOURCES
             ${CMAKE_CURRENT_LIST_DIR}/fpga/design/core/Prototype2.v
+            ${CMAKE_CURRENT_LIST_DIR}/fpga/design/video/VideoTimingController.v
     )
 endif ()
 

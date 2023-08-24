@@ -1,37 +1,41 @@
-set_frequency w_pixel_clk 65.25
+set_frequency w_pixel_clk 51.00
 set_frequency w_master_clk 50.35
 
-set_io clk 94
+set_io CLK 94
 
-set_io vsync_o 137
-set_io hsync_o 141
+set_io TFT_RESET 106
+set_io TFT_DE 139
+set_io TFT_DCLK 105
+set_io TFT_MODE 138
+set_io TFT_VSYNC 137
+set_io TFT_HSYNC 141
 
-set_io red[0] 110
-set_io red[1] 112
-set_io red[2] 113 
-set_io red[3] 114
-set_io red[4] 115
-set_io red[5] 107
-set_io red[6] 116
-set_io red[7] 117
+set_io TFT_RED[0] 110
+set_io TFT_RED[1] 112
+set_io TFT_RED[2] 113 
+set_io TFT_RED[3] 114
+set_io TFT_RED[4] 115
+set_io TFT_RED[5] 107
+set_io TFT_RED[6] 116
+set_io TFT_RED[7] 117
 
-set_io blue[0] 129
-set_io blue[1] 130
-set_io blue[2] 144
-set_io blue[3] 134
-set_io blue[4] 143
-set_io blue[5] 135
-set_io blue[6] 142
-set_io blue[7] 136
+set_io TFT_BLUE[0] 129
+set_io TFT_BLUE[1] 130
+set_io TFT_BLUE[2] 144
+set_io TFT_BLUE[3] 134
+set_io TFT_BLUE[4] 143
+set_io TFT_BLUE[5] 135
+set_io TFT_BLUE[6] 142
+set_io TFT_BLUE[7] 136
 
-set_io green[0] 118
-set_io green[1] 119
-set_io green[2] 120
-set_io green[3] 121
-set_io green[4] 122
-set_io green[5] 124
-set_io green[6] 125
-set_io green[7] 128
+set_io TFT_GREEN[0] 118
+set_io TFT_GREEN[1] 119
+set_io TFT_GREEN[2] 120
+set_io TFT_GREEN[3] 121
+set_io TFT_GREEN[4] 122
+set_io TFT_GREEN[5] 124
+set_io TFT_GREEN[6] 125
+set_io TFT_GREEN[7] 128
 
 set_io M1D[0] 11
 set_io M1D[1] 12
@@ -88,7 +92,7 @@ set_io M1A[18] 23
 set_io M1A[19] 24 
 
 set_io M1CS 26
-set_io M1OE 87
+set_io M1OE 56
 set_io M1WE 25
 
 set_io SPI_CS_n 71
@@ -98,3 +102,6 @@ set_io SPI_MOSI 68
 
 set_io PWR_VGL 90
 set_io PWR_VGH 101
+set_io PWR_VCOM 88
+set_io PWR_DVDD 87
+set_io PWR_AVDD 104
