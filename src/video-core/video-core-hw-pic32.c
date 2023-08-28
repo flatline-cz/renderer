@@ -8,6 +8,7 @@
 #include "video-core-hw.h"
 #include "pic32/pic32mz-gpio.h"
 #include "pic32/pic32mz-regs.h"
+#include "pic32/pic32mz-int.h"
 #include "profile.h"
 
 
@@ -78,9 +79,9 @@ static void start_DMA_transfer(const void *src, uint32_t length) {
     DMACONSET = _DMACON_ON_MASK;
 
     // setup channel
-    ResolveDCHxCON(FPGA_DMA) = 3;
+    ResolveDCHxCON(FPGA_DMA) = 1;
     ResolveDCHxECON(FPGA_DMA) = 0;
-    ResolveDCHxECONSET(FPGA_DMA) = (144 << _DCH0ECON_CHSIRQ_POSITION) | _DCH0ECON_SIRQEN_MASK;
+    ResolveDCHxECONSET(FPGA_DMA) = (IRQ_NUMBER(SPI_TX, FPGA_SPI) << _DCH0ECON_CHSIRQ_POSITION) | _DCH0ECON_SIRQEN_MASK;
 
     ResolveDCHxSSA(FPGA_DMA) = transfer_address;
     ResolveDCHxSSIZ(FPGA_DMA) = transfer_block_size & 0xffff;

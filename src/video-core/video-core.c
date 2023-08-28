@@ -309,7 +309,7 @@ static inline void render_texture_upload() {
 
     // waiting for 1st block of texture is read
     if (render_state == RENDER_STATE_READ_TEXTURE_A) {
-        if (texture_requestA.status == SPI_FLASH_IN_PROCESS)
+        if (texture_requestA.status == SPI_FLASH_IN_PROGRESS)
             return;
         texture_length -= texture_requestA.length;
         texture_requestA.status = SPI_FLASH_IDLE;
@@ -340,7 +340,7 @@ static inline void render_texture_upload() {
                 return;
             }
             // wait for transfer to be finished
-            if (texture_requestB.status == SPI_FLASH_IN_PROCESS)
+            if (texture_requestB.status == SPI_FLASH_IN_PROGRESS)
                 return;
         }
 
@@ -382,7 +382,7 @@ static inline void render_texture_upload() {
                 return;
             }
             // wait for transfer to be finished
-            if (texture_requestA.status == SPI_FLASH_IN_PROCESS)
+            if (texture_requestA.status == SPI_FLASH_IN_PROGRESS)
                 return;
         }
 
