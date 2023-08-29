@@ -316,8 +316,8 @@ static void vc_cmd_color(tRendererColor color,
     uint8_t blue = ((color.blue) >> 4) & 0x0f;
     uint8_t alpha = ((color.alpha) >> 4) & 0x0f;
 
-    buffer[(*length)++] = red | (green << 4);
-    buffer[(*length)++] = blue | (alpha << 4);
+    buffer[(*length)++] = blue | (green << 4);
+    buffer[(*length)++] = red | (alpha << 4);
 }
 
 static void vc_cmd_rect_color(tRendererPosition left,

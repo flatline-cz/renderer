@@ -109,7 +109,7 @@ module VideoTimingController (
     always @(posedge i_pixel_clk) begin
         if(r_horizontal_counter == HSYNC_PULSE + HSYNC_BACK_PORCH - 1)
             r_horizontal_video_on <= 1;
-        if(r_horizontal_counter == HSYNC_PULSE + HSYNC_BACK_PORCH + HSYNC_WIDTH - 4)
+        if(r_horizontal_counter == HSYNC_PULSE + HSYNC_BACK_PORCH + HSYNC_WIDTH - 1)
             r_horizontal_video_on <= 0;
     end
 
@@ -173,7 +173,7 @@ module VideoTimingController (
     always @(posedge i_pixel_clk) begin
         if(r_vertical_counter == VSYNC_PULSE + VSYNC_BACK_PORCH - 1)
             r_vertical_video_on <= 1;
-        if(r_vertical_counter == VSYNC_PULSE + VSYNC_BACK_PORCH + VSYNC_HEIGHT - 1)
+        if(r_vertical_counter == VSYNC_PULSE + VSYNC_BACK_PORCH + VSYNC_HEIGHT + 1)
             r_vertical_video_on <= 0;
     end
 
@@ -200,7 +200,7 @@ module VideoTimingController (
             r_video_blank <= 1;
     end
 
-    assign o_timing_blank = !(r_vertical_video_on && r_horizontal_video_on && !r_video_blank);
+    assign o_timing_blank = !(r_vertical_video_on && r_horizontal_video_on);
 
     // -- signal: next row is the first row displayed
     assign o_timing_prefetch_row_first_render = w_next_row_is_first;

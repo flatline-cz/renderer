@@ -122,9 +122,15 @@ module VideoRowBuffer (
     reg[3:0]    r_video_green_out;
     reg[3:0]    r_video_blue_out;
 
+    // TODO: normal version
+//    wire[8:0]   w_video_tupple_address = (i_system_rendering_mode == 1)
+//        ? r_cache_read_counter[9:1]
+//        : { 1'b0, !r_cache_read_counter[8], r_cache_read_counter[7:1] };
+    // TODO: flipped version
     wire[8:0]   w_video_tupple_address = (i_system_rendering_mode == 1)
-        ? r_cache_read_counter[9:1]
+        ? 1023-r_cache_read_counter[9:1]
         : { 1'b0, !r_cache_read_counter[8], r_cache_read_counter[7:1] };
+
     reg[23:0]   r_video_tupple;
     reg         r_video_tupple_blank;
 
@@ -135,22 +141,45 @@ module VideoRowBuffer (
         end
     end
 
+    // TODO: normal version
+//    always @(negedge i_pixel_clk) begin
+//        r_video_red_out     <= (i_video_timing_blank || r_video_tupple_blank)
+//            ? 4'hf
+//            : (r_cache_read_counter[0]
+//                ? r_video_tupple[15:12]
+//                : r_video_tupple[3:0]
+//                );
+//        r_video_green_out     <= (i_video_timing_blank || r_video_tupple_blank)
+//            ? 4'h0
+//            : (r_cache_read_counter[0]
+//                ? r_video_tupple[19:16]
+//                : r_video_tupple[7:4]
+//                );
+//        r_video_blue_out     <= (i_video_timing_blank || r_video_tupple_blank)
+//            ? 4'h0
+//            : (r_cache_read_counter[0]
+//                ? r_video_tupple[23:20]
+//                : r_video_tupple[11:8]
+//                );
+//    end
+
+    // TODO: flipped version
     always @(negedge i_pixel_clk) begin
         r_video_red_out     <= (i_video_timing_blank || r_video_tupple_blank)
-            ? 4'hf
-            : (r_cache_read_counter[0]
+            ? 4'h0
+            : (!r_cache_read_counter[0]
                 ? r_video_tupple[15:12]
                 : r_video_tupple[3:0]
                 );
         r_video_green_out     <= (i_video_timing_blank || r_video_tupple_blank)
             ? 4'h0 
-            : (r_cache_read_counter[0]
+            : (!r_cache_read_counter[0]
                 ? r_video_tupple[19:16]
                 : r_video_tupple[7:4]
                 );
         r_video_blue_out     <= (i_video_timing_blank || r_video_tupple_blank)
             ? 4'h0 
-            : (r_cache_read_counter[0]
+            : (!r_cache_read_counter[0]
                 ? r_video_tupple[23:20]
                 : r_video_tupple[11:8]
                 );
