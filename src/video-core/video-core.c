@@ -282,11 +282,6 @@ static eStatus handle_mode(uint8_t status) {
     }
 
     // new mode request?
-//    bool show_screen=false;
-//    if(target_mode!=NORMAL) {
-//        renderer_show_screen(0);
-//    }
-
     if (target_mode != requested_mode) {
         requested_mode = target_mode;
         mode_switch_timeout = 0;
@@ -431,10 +426,10 @@ static void render_texture_upload() {
 }
 
 static eStatus handle_rendering(uint8_t status) {
-//    if (render_state != RENDER_STATE_RENDERING) {
-//        render_texture_upload();
-//        return RETURN_TRUE;
-//    }
+    if (render_state != RENDER_STATE_RENDERING) {
+        render_texture_upload();
+        return RETURN_TRUE;
+    }
 
     if (last_rendering + RENDERING_PERIOD > TIME_GET)
         return RETURN_FALSE;
