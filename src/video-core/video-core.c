@@ -8,6 +8,7 @@
 #include <spi-flash.h>
 #include "system-config.h"
 #include "trace.h"
+#include "data-upload.h"
 
 
 // *******************************************
@@ -49,25 +50,27 @@ static tTime last_rendering;
 #define RENDERING_PERIOD        50
 #define PLAYBACK_PERIOD         50
 
-// data exchange buffer
-#define BUFFER_SIZE     (4*1024)
-static uint8_t data_bufferA[BUFFER_SIZE];
-static uint8_t data_bufferB[BUFFER_SIZE];
+//// data exchange buffer
+//#define BUFFER_SIZE     (4*1024)
+//static uint8_t data_bufferA[BUFFER_SIZE];
+//static uint8_t data_bufferB[BUFFER_SIZE];
 
 // rendering textures
 static tRendererScreenGraphics *current_rendering_context;
 static tRendererScreenGraphics *target_rendering_context;
 #define RENDER_STATE_START              0
-#define RENDER_STATE_READ_TEXTURE_A     1
-#define RENDER_STATE_UPLOAD_TEXTURE_A   2
-#define RENDER_STATE_UPLOAD_TEXTURE_B   3
-#define RENDER_STATE_RENDERING          4
+#define RENDER_STATE_UPLOAD_TEXTURE     1
+#define RENDER_STATE_RENDERING          2
+#define RENDER_STATE_UPLOAD_VIDEO       3
+#define RENDER_STATE_PLAYBACK           4
 static int render_state;
-static uint32_t texture_length;
-// -- texture buffer A
-static tSPIFlashRequest texture_requestA;
-// -- texture buffer B
-static tSPIFlashRequest texture_requestB;
+static tUploadDataRequest texture_request;
+
+//static uint32_t texture_length;
+//// -- texture buffer A
+//static tSPIFlashRequest texture_requestA;
+//// -- texture buffer B
+//static tSPIFlashRequest texture_requestB;
 
 // video playback context
 static bool video_uploaded;
@@ -104,6 +107,7 @@ void vc_init() {
     video_descriptor = NULL;
 
     // reset
+    upload_data_init();
     renderer_init();
 }
 
@@ -153,6 +157,8 @@ static uint8_t query_status() {
 static uint8_t set_mode_buffer[2];
 
 static void set_mode(uint8_t mode) {
+    if(!video_core_hw_idle())
+        return;
     set_mode_buffer[0] = 4;
     set_mode_buffer[1] = mode;
     video_core_hw_send(set_mode_buffer, 2, NULL, 0);
@@ -161,6 +167,8 @@ static void set_mode(uint8_t mode) {
 static uint8_t upload_data_buffer[4];
 
 static void upload_data(uint8_t *data, uint32_t offset, uint32_t length) {
+    if(!video_core_hw_idle())
+        return;
     upload_data_buffer[0] = 0x02;
     upload_data_buffer[1] = (offset >> 16) & 0xff;
     upload_data_buffer[2] = (offset >> 8) & 0xff;
@@ -171,6 +179,8 @@ static void upload_data(uint8_t *data, uint32_t offset, uint32_t length) {
 static uint8_t set_video_frame_buffer[4];
 
 static void set_video_frame() {
+    if(!video_core_hw_idle())
+        return;
     set_video_frame_buffer[0] = 0x03;
     set_video_frame_buffer[1] = (video_descriptor->frame_offsets[video_frame] >> 16) & 0xff;
     set_video_frame_buffer[2] = (video_descriptor->frame_offsets[video_frame] >> 8) & 0xff;
@@ -292,134 +302,134 @@ static eStatus handle_mode(uint8_t status) {
 
 static void render_texture_upload() {
     // initialization?
-    if (render_state == RENDER_STATE_START) {
-        // new texture needed?
-        if (current_rendering_context == target_rendering_context) {
-            // no -> start rendering scene
-            render_state = RENDER_STATE_RENDERING;
-            return;
-        }
-        // new texture needed -> read first buffer
-        TRACE("Start uploading texture (%d bytes)", target_rendering_context->length);
-        texture_length = target_rendering_context->length;
-        texture_requestB.status = SPI_FLASH_IDLE;
-        texture_requestA.status = SPI_FLASH_IDLE;
-        texture_requestA.buffer = data_bufferA;
-        texture_requestA.bank = FLASH_BANK_SCENE;
-        texture_requestA.address = target_rendering_context->base;
-        texture_requestA.length = (texture_length <= BUFFER_SIZE) ? texture_length : BUFFER_SIZE;
-        // initialize texture read
-        if (spi_flash_read(&texture_requestA)) {
-            render_state = RENDER_STATE_READ_TEXTURE_A;
-        }
-        return;
-    }
-
-    // waiting for 1st block of texture is read
-    if (render_state == RENDER_STATE_READ_TEXTURE_A) {
-        if (texture_requestA.status == SPI_FLASH_IN_PROGRESS)
-            return;
-        texture_length -= texture_requestA.length;
-        texture_requestA.status = SPI_FLASH_IDLE;
-
-        // start uploading buffer A
-        upload_data(texture_requestA.buffer,
-                    texture_requestA.address - target_rendering_context->base,
-                    texture_requestA.length);
-
-        // update context
-        texture_requestB.status = SPI_FLASH_IDLE;
-        render_state = RENDER_STATE_UPLOAD_TEXTURE_A;
-        return;
-    }
-
-    // uploading buffer A?
-    if (render_state == RENDER_STATE_UPLOAD_TEXTURE_A) {
-        // have something more to read (to buffer B)?
-        if (texture_length != 0) {
-            // transfer not initialized yet?
-            if (texture_requestB.status == SPI_FLASH_IDLE) {
-                // initialize
-                texture_requestB.buffer = data_bufferB;
-                texture_requestB.bank = FLASH_BANK_SCENE;
-                texture_requestB.address = texture_requestA.address + texture_requestA.length;
-                texture_requestB.length = (texture_length <= BUFFER_SIZE) ? texture_length : BUFFER_SIZE;
-                spi_flash_read(&texture_requestB);
-                return;
-            }
-            // wait for transfer to be finished
-            if (texture_requestB.status == SPI_FLASH_IN_PROGRESS)
-                return;
-        }
-
-        // check the uploading is done
-        if(!video_core_hw_idle())
-            return;
-
-        // Buffer A is processed, end of texture?
-        if (texture_length == 0) {
-            // end of texture uploading
-            TRACE("Texture uploading finished");
-            render_state = RENDER_STATE_RENDERING;
-            current_rendering_context = target_rendering_context;
-            return;
-        }
-        texture_length -= texture_requestB.length;
-
-        // no, start uploading buffer B
-        upload_data(texture_requestB.buffer,
-                    texture_requestB.address - target_rendering_context->base,
-                    texture_requestB.length);
-
-        // update context
-        texture_requestA.status = SPI_FLASH_IDLE;
-        render_state = RENDER_STATE_UPLOAD_TEXTURE_B;
-        return;
-    }
-
-    // uploading buffer B?
-    if (render_state == RENDER_STATE_UPLOAD_TEXTURE_B) {
-        // have something more to read (to buffer A)?
-        if (texture_length != 0) {
-            // transfer not initialized yet?
-            if (texture_requestA.status == SPI_FLASH_IDLE) {
-                // initialize
-                texture_requestA.buffer = data_bufferB;
-                texture_requestA.bank = FLASH_BANK_SCENE;
-                texture_requestA.address = texture_requestB.address + texture_requestA.length;
-                texture_requestA.length = (texture_length <= BUFFER_SIZE) ? texture_length : BUFFER_SIZE;
-                spi_flash_read(&texture_requestA);
-                return;
-            }
-            // wait for transfer to be finished
-            if (texture_requestA.status == SPI_FLASH_IN_PROGRESS)
-                return;
-        }
-
-        // check the uploading is done
-        if(!video_core_hw_idle())
-            return;
-
-        // Buffer A is processed, end of texture?
-        if (texture_length == 0) {
-            // end of texture uploading
-            TRACE("Texture uploading finished")
-            render_state = RENDER_STATE_RENDERING;
-            current_rendering_context = target_rendering_context;
-            return;
-        }
-        texture_length -= texture_requestA.length;
-
-        // no, start uploading buffer A
-        upload_data(texture_requestA.buffer,
-                    texture_requestA.address - target_rendering_context->base,
-                    texture_requestA.length);
-
-        // update context
-        texture_requestB.status = SPI_FLASH_IDLE;
-        render_state = RENDER_STATE_UPLOAD_TEXTURE_A;
-        return;
-    }
+//    if (render_state == RENDER_STATE_START) {
+//        // new texture needed?
+//        if (current_rendering_context == target_rendering_context) {
+//            // no -> start rendering scene
+//            render_state = RENDER_STATE_RENDERING;
+//            return;
+//        }
+//        // new texture needed -> read first buffer
+//        TRACE("Start uploading texture (%d bytes)", target_rendering_context->length);
+//        texture_length = target_rendering_context->length;
+//        texture_requestB.status = SPI_FLASH_IDLE;
+//        texture_requestA.status = SPI_FLASH_IDLE;
+//        texture_requestA.buffer = data_bufferA;
+//        texture_requestA.bank = FLASH_BANK_SCENE;
+//        texture_requestA.address = target_rendering_context->base;
+//        texture_requestA.length = (texture_length <= BUFFER_SIZE) ? texture_length : BUFFER_SIZE;
+//        // initialize texture read
+//        if (spi_flash_read(&texture_requestA)) {
+//            render_state = RENDER_STATE_READ_TEXTURE_A;
+//        }
+//        return;
+//    }
+//
+//    // waiting for 1st block of texture is read
+//    if (render_state == RENDER_STATE_READ_TEXTURE_A) {
+//        if (texture_requestA.status == SPI_FLASH_IN_PROGRESS)
+//            return;
+//        texture_length -= texture_requestA.length;
+//        texture_requestA.status = SPI_FLASH_IDLE;
+//
+//        // start uploading buffer A
+//        upload_data(texture_requestA.buffer,
+//                    texture_requestA.address - target_rendering_context->base,
+//                    texture_requestA.length);
+//
+//        // update context
+//        texture_requestB.status = SPI_FLASH_IDLE;
+//        render_state = RENDER_STATE_UPLOAD_TEXTURE_A;
+//        return;
+//    }
+//
+//    // uploading buffer A?
+//    if (render_state == RENDER_STATE_UPLOAD_TEXTURE_A) {
+//        // have something more to read (to buffer B)?
+//        if (texture_length != 0) {
+//            // transfer not initialized yet?
+//            if (texture_requestB.status == SPI_FLASH_IDLE) {
+//                // initialize
+//                texture_requestB.buffer = data_bufferB;
+//                texture_requestB.bank = FLASH_BANK_SCENE;
+//                texture_requestB.address = texture_requestA.address + texture_requestA.length;
+//                texture_requestB.length = (texture_length <= BUFFER_SIZE) ? texture_length : BUFFER_SIZE;
+//                spi_flash_read(&texture_requestB);
+//                return;
+//            }
+//            // wait for transfer to be finished
+//            if (texture_requestB.status == SPI_FLASH_IN_PROGRESS)
+//                return;
+//        }
+//
+//        // check the uploading is done
+//        if (!video_core_hw_idle())
+//            return;
+//
+//        // Buffer A is processed, end of texture?
+//        if (texture_length == 0) {
+//            // end of texture uploading
+//            TRACE("Texture uploading finished");
+//            render_state = RENDER_STATE_RENDERING;
+//            current_rendering_context = target_rendering_context;
+//            return;
+//        }
+//        texture_length -= texture_requestB.length;
+//
+//        // no, start uploading buffer B
+//        upload_data(texture_requestB.buffer,
+//                    texture_requestB.address - target_rendering_context->base,
+//                    texture_requestB.length);
+//
+//        // update context
+//        texture_requestA.status = SPI_FLASH_IDLE;
+//        render_state = RENDER_STATE_UPLOAD_TEXTURE_B;
+//        return;
+//    }
+//
+//    // uploading buffer B?
+//    if (render_state == RENDER_STATE_UPLOAD_TEXTURE_B) {
+//        // have something more to read (to buffer A)?
+//        if (texture_length != 0) {
+//            // transfer not initialized yet?
+//            if (texture_requestA.status == SPI_FLASH_IDLE) {
+//                // initialize
+//                texture_requestA.buffer = data_bufferB;
+//                texture_requestA.bank = FLASH_BANK_SCENE;
+//                texture_requestA.address = texture_requestB.address + texture_requestA.length;
+//                texture_requestA.length = (texture_length <= BUFFER_SIZE) ? texture_length : BUFFER_SIZE;
+//                spi_flash_read(&texture_requestA);
+//                return;
+//            }
+//            // wait for transfer to be finished
+//            if (texture_requestA.status == SPI_FLASH_IN_PROGRESS)
+//                return;
+//        }
+//
+//        // check the uploading is done
+//        if (!video_core_hw_idle())
+//            return;
+//
+//        // Buffer A is processed, end of texture?
+//        if (texture_length == 0) {
+//            // end of texture uploading
+//            TRACE("Texture uploading finished")
+//            render_state = RENDER_STATE_RENDERING;
+//            current_rendering_context = target_rendering_context;
+//            return;
+//        }
+//        texture_length -= texture_requestA.length;
+//
+//        // no, start uploading buffer A
+//        upload_data(texture_requestA.buffer,
+//                    texture_requestA.address - target_rendering_context->base,
+//                    texture_requestA.length);
+//
+//        // update context
+//        texture_requestB.status = SPI_FLASH_IDLE;
+//        render_state = RENDER_STATE_UPLOAD_TEXTURE_A;
+//        return;
+//    }
 
 #ifndef PIC32
     // should not get here
@@ -429,9 +439,29 @@ static void render_texture_upload() {
 }
 
 static eStatus handle_rendering(uint8_t status) {
-    if (render_state != RENDER_STATE_RENDERING) {
-        render_texture_upload();
+    if (render_state == RENDER_STATE_START) {
+        // no need to upload texture?
+        if (current_rendering_context == target_rendering_context) {
+            // no -> start rendering scene
+            render_state = RENDER_STATE_RENDERING;
+            return RETURN_TRUE;
+        }
+        // upload texture
+        current_rendering_context = target_rendering_context;
+        texture_request.uploadDataRoutine = upload_data;
+        texture_request.updateFinishedRoutine = video_core_hw_idle;
+        texture_request.source_addr = current_rendering_context->base;
+        texture_request.target_addr = 0;
+        texture_request.length = current_rendering_context->length;
+        render_state = RENDER_STATE_UPLOAD_TEXTURE;
+        upload_data_start(&texture_request);
         return RETURN_TRUE;
+    }
+
+    if (render_state == RENDER_STATE_UPLOAD_TEXTURE) {
+        if (!texture_request.finished)
+            return RETURN_FALSE;
+        render_state = RENDER_STATE_RENDERING;
     }
 
     if (last_rendering + RENDERING_PERIOD > TIME_GET)
@@ -489,6 +519,7 @@ static eStatus handle_playback(uint8_t status) {
 bool vc_handle() {
     if (!video_core_hw_idle())
         return false;
+    upload_data_handle();
     // polling?
     if (next_poll_time > TIME_GET)
         return false;
