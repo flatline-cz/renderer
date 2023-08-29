@@ -138,14 +138,14 @@ bool video_core_hw_handle() {
         return false;
 
     // transfer initiated?
-//    if (state == STATE_BUSY) {
-//        if (is_DMA_transfer_finished()) {
-//            state = STATE_READY;
-//            ResolveLAT(FPGA_CS_PIN) = 1;
-//            return true;
-//        }
-//        return false;
-//    }
+    if (state == STATE_BUSY) {
+        if (is_DMA_transfer_finished()) {
+            state = STATE_READY;
+            ResolveLAT(FPGA_CS_PIN) = 1;
+            return true;
+        }
+        return false;
+    }
 
     // reset FPGA?
     if (state == STATE_INIT) {
@@ -214,8 +214,8 @@ static void spi_xchg(uint8_t *data_send, uint8_t *data_receive, unsigned length)
     if (ResolveSPISTATbits(FPGA_SPI).SPIRBF)
         ResolveSPIBUF(FPGA_SPI);
     ResolveSPISTATCLR(FPGA_SPI) = _SPI1STAT_SPIROV_MASK;
-    
-    volatile uint8_t* p=data_send;
+
+    volatile uint8_t *p = data_send;
     volatile uint8_t dummy;
 
     // process each byte
@@ -226,7 +226,7 @@ static void spi_xchg(uint8_t *data_send, uint8_t *data_receive, unsigned length)
         if (data_receive) {
             *(data_receive++) = ResolveSPIBUF(FPGA_SPI);
         } else {
-            dummy=ResolveSPIBUF(FPGA_SPI);
+            dummy = ResolveSPIBUF(FPGA_SPI);
         }
     }
 }
@@ -240,20 +240,19 @@ bool video_core_hw_send(uint8_t *prefix, uint16_t prefix_length,
     ResolveLAT(FPGA_CS_PIN) = 0;
 
     // send prefix
-    if (prefix_length)
+    if (prefix_length != 0 && prefix != NULL)
         spi_xchg(prefix, NULL, prefix_length);
 
-    if (data_length != 0) {
-        spi_xchg(data, NULL, data_length);
-        
+    if (data_length == 0 || data == NULL) {
+//        spi_xchg(data, NULL, data_length);
+        // de-assert CS
+        ResolveLAT(FPGA_CS_PIN) = 1;
+        return true;
     }
-    // de-assert CS
-    ResolveLAT(FPGA_CS_PIN) = 1;
-    return true;
 
     // start transfer
-//    state = STATE_BUSY;
-//    start_DMA_transfer(data, data_length);
+    state = STATE_BUSY;
+    start_DMA_transfer(data, data_length);
 
     return true;
 }

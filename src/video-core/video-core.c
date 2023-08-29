@@ -353,7 +353,9 @@ static void render_texture_upload() {
                 return;
         }
 
-        // TODO: check the uploading is done
+        // check the uploading is done
+        if(!video_core_hw_idle())
+            return;
 
         // Buffer A is processed, end of texture?
         if (texture_length == 0) {
@@ -395,7 +397,9 @@ static void render_texture_upload() {
                 return;
         }
 
-        // TODO: check the uploading is done
+        // check the uploading is done
+        if(!video_core_hw_idle())
+            return;
 
         // Buffer A is processed, end of texture?
         if (texture_length == 0) {
