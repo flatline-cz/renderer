@@ -1,7 +1,6 @@
 //
 // Created by tumap on 12/5/22.
 //
-#include <xc.h>
 #include <profile.h>
 #include <renderer.h>
 #include <video-core.h>

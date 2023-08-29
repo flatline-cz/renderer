@@ -26,26 +26,41 @@ void binding_gpio_init() {
     }
 }
 
+static inline bool call_bindings(int key, eRendererGpioBindingEvent event) {
+    int level;
+    for (level = 0; level < STACK_DEPTH; level++) {
+        if (!bindings[key][level].routine)
+            break;
+        if (bindings[key][level].routine(
+                key,
+                event,
+                bindings[key][level].arg)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 bool binding_gpio_handle() {
-    bool state=false;
+    bool state = false;
     uint32_t keys = platform_gpio_get_state();
     int key;
     for (key = 0; key < PLATFORM_GPIO_BUTTONS && keys != 0; key++) {
-        if (keys & (1 << key)) {
+        // key event?
+        bool short_press = (keys & (1 << key));
+        bool long_press = (keys & (1 << (key + 16)));
+        if (!short_press && !long_press)
+            continue;
+        if (short_press)
             keys &= ~(1 << key);
-            int level;
-            for (level = 0; level < STACK_DEPTH; level++) {
-                if (!bindings[key][level].routine)
-                    break;
-                if (bindings[key][level].routine(
-                        key,
-                        GPIO_BINDING_SHORT_PRESS,
-                        bindings[key][level].arg)) {
-                    state=true;
-                    break;
-                }
-            }
-        }
+        if (long_press)
+            keys &= ~(1 << (key + 16));
+
+        // process bindings
+        if (short_press)
+            state |= call_bindings(key, GPIO_BINDING_SHORT_PRESS);
+        if (long_press)
+            state |= call_bindings(key, GPIO_BINDING_LONG_PRESS);
     }
     return state;
 }
