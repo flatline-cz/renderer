@@ -67,6 +67,9 @@ void video_core_hw_init() {
 }
 
 static void start_DMA_transfer(const void *src, uint32_t length) {
+
+    while(ResolveSPISTATbits(FPGA_SPI).SPIBUSY);
+
     // create context
     transfer_address = KVA_TO_PA(src);
     transfer_length = length;
@@ -79,6 +82,12 @@ static void start_DMA_transfer(const void *src, uint32_t length) {
     DMACONSET = _DMACON_ON_MASK;
 
     // setup channel
+    ResolveDCHxCON(FPGA_DMA) = 0;
+
+    IFS4bits.SPI2EIF=0;
+    IFS4bits.SPI2RXIF=0;
+    IFS4bits.SPI2TXIF=0;
+
     ResolveDCHxCON(FPGA_DMA) = 1;
     ResolveDCHxECON(FPGA_DMA) = 0;
     ResolveDCHxECONSET(FPGA_DMA) = (IRQ_NUMBER(SPI_TX, FPGA_SPI) << _DCH0ECON_CHSIRQ_POSITION) | _DCH0ECON_SIRQEN_MASK;
@@ -99,8 +108,9 @@ static bool is_DMA_transfer_finished() {
         return true;
 
     // transfer in progress?
-    if (ResolveDCHxINTbits(FPGA_DMA).CHSDIF == 0)
+    if (ResolveDCHxINTbits(FPGA_DMA).CHBCIF == 0)
         return false;
+    ResolveDCHxCON(FPGA_DMA)=0;
 
     // update context
     transfer_length -= transfer_block_size;
@@ -115,9 +125,12 @@ static bool is_DMA_transfer_finished() {
         transfer_block_size = 65536;
 
     // wait until SPI is idle
-    while (ResolveSPISTATbits(FPGA_SPI).SPITBE == 0 || ResolveSPISTATbits(FPGA_SPI).SPIBUSY == 1);
+//    while (ResolveSPISTATbits(FPGA_SPI).SPITBE == 0 || ResolveSPISTATbits(FPGA_SPI).SPIBUSY == 1);
 
     // initiate transfer
+    ResolveDCHxCON(FPGA_DMA) = 1;
+    ResolveDCHxECON(FPGA_DMA) = 0;
+    ResolveDCHxECONSET(FPGA_DMA) = (IRQ_NUMBER(SPI_TX, FPGA_SPI) << _DCH0ECON_CHSIRQ_POSITION) | _DCH0ECON_SIRQEN_MASK;
     ResolveDCHxSSA(FPGA_DMA) = transfer_address + transfer_position;
     ResolveDCHxSSIZ(FPGA_DMA) = transfer_block_size & 0xffff;
     ResolveDCHxDSA(FPGA_DMA) = KVA_TO_PA(&ResolveSPIBUF(FPGA_SPI));
