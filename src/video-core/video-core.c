@@ -46,7 +46,7 @@ static unsigned mode_switch_retry;
 // *******************************************
 
 // update timer
-static tTime last_rendering = 0;
+static tTime last_rendering;
 #define RENDERING_PERIOD        50
 #define PLAYBACK_PERIOD         50
 
@@ -98,6 +98,7 @@ void vc_init() {
     // reset rendering context
     current_rendering_context = NULL;
     target_rendering_context = NULL;
+    last_rendering = 0;
 
     // reset playback context
     video_uploaded = false;
@@ -105,13 +106,12 @@ void vc_init() {
 
     // reset
     renderer_init();
-
 }
 
 void vc_set_render_mode(tRendererScreenGraphics *graphics) {
     target_rendering_context = graphics;
     render_state = RENDER_STATE_START;
-    last_rendering=0;
+    last_rendering = 0;
     target_mode = NORMAL;
 }
 
@@ -151,45 +151,37 @@ static uint8_t query_status() {
     return query_status_buffer[2];
 }
 
+static uint8_t set_mode_buffer[2];
+
 static void set_mode(uint8_t mode) {
-    int i;
-    for(i=0;i<10000;i++);
-    query_status_buffer[0] = 4;
-    query_status_buffer[1] = mode;
-    query_status_buffer[2] = 0xff;
-    video_core_hw_exchange(query_status_buffer, query_status_buffer, 3);
-    Nop();
-//    set_mode_buffer[0] = 4;
-//    set_mode_buffer[1] = mode;
-//    video_core_hw_exchange(set_mode_buffer, set_mode_buffer, 2);
-//    video_core_hw_send(set_mode_buffer, 2, NULL, 0);
+    set_mode_buffer[0] = 4;
+    set_mode_buffer[1] = mode;
+    video_core_hw_send(set_mode_buffer, 2, NULL, 0);
 }
 
+static uint8_t upload_data_buffer[4];
 
 static void upload_data(uint8_t *data, uint32_t offset, uint32_t length) {
-    static uint8_t prefix[4];
-    prefix[0] = 0x02;
-    prefix[1] = (offset >> 16) & 0xff;
-    prefix[2] = (offset >> 8) & 0xff;
-    prefix[3] = (offset >> 0) & 0xff;
-    video_core_hw_send(prefix, 4, data, length);
+    upload_data_buffer[0] = 0x02;
+    upload_data_buffer[1] = (offset >> 16) & 0xff;
+    upload_data_buffer[2] = (offset >> 8) & 0xff;
+    upload_data_buffer[3] = (offset >> 0) & 0xff;
+    video_core_hw_send(upload_data_buffer, 4, data, length);
 }
 
+static uint8_t set_video_frame_buffer[4];
+
 static void set_video_frame() {
-    static uint8_t frame[4];
-    frame[0] = 0x03;
-    frame[1] = (video_descriptor->frame_offsets[video_frame] >> 16) & 0xff;
-    frame[2] = (video_descriptor->frame_offsets[video_frame] >> 8) & 0xff;
-    frame[3] = (video_descriptor->frame_offsets[video_frame] >> 0) & 0xff;
-    video_core_hw_send(NULL, 0, frame, 4);
+    set_video_frame_buffer[0] = 0x03;
+    set_video_frame_buffer[1] = (video_descriptor->frame_offsets[video_frame] >> 16) & 0xff;
+    set_video_frame_buffer[2] = (video_descriptor->frame_offsets[video_frame] >> 8) & 0xff;
+    set_video_frame_buffer[3] = (video_descriptor->frame_offsets[video_frame] >> 0) & 0xff;
+    video_core_hw_send(set_video_frame_buffer, 4, NULL, 0);
 }
 
 typedef enum tagStatus {
     PASS, RETURN_TRUE, RETURN_FALSE
 } eStatus;
-
-// FIXME:
-void renderer_show_screen(tRendererScreenHandle screen_handle);
 
 static eStatus handle_mode(uint8_t status) {
     // get current mode
@@ -294,7 +286,7 @@ static eStatus handle_mode(uint8_t status) {
 //    if(target_mode!=NORMAL) {
 //        renderer_show_screen(0);
 //    }
-    
+
     if (target_mode != requested_mode) {
         requested_mode = target_mode;
         mode_switch_timeout = 0;
