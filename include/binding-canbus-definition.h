@@ -16,7 +16,7 @@ typedef struct tagBindingCANBUSDefBitSplice {
     uint8_t dst_left;
 } tBindingCANBUSDefBitSplice;
 
-extern tBindingCANBUSDefBitSplice binding_canbus_bit_splices[];
+extern const tBindingCANBUSDefBitSplice binding_canbus_bit_splices[];
 
 typedef struct tagBindingCANBUSDefField {
     uint16_t first_bit_splice;
@@ -24,7 +24,7 @@ typedef struct tagBindingCANBUSDefField {
     int8_t sign_bits;
 } tBindingCANBUSDefField;
 
-extern tBindingCANBUSDefField binding_canbus_fields[];
+extern const tBindingCANBUSDefField binding_canbus_fields[];
 
 typedef struct tagBindingCANBUSDefMessage {
     // message identification
@@ -37,7 +37,7 @@ typedef struct tagBindingCANBUSDefMessage {
     uint16_t first_field;
 } tBindingCANBUSDefMessage;
 
-extern tBindingCANBUSDefMessage binding_canbus_messages[];
-extern unsigned binding_canbus_message_count;
+extern const tBindingCANBUSDefMessage binding_canbus_messages[];
+extern const unsigned binding_canbus_message_count;
 
 #endif //HEAD_UNIT_BINDING_CANBUS_DEFINITION_H
