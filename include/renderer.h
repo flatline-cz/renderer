@@ -8,7 +8,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-//void renderer_init();
+void renderer_init();
 
 //bool renderer_handle();
 

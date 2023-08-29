@@ -137,7 +137,7 @@ module VideoRowBuffer (
 
     always @(negedge i_pixel_clk) begin
         r_video_red_out     <= (i_video_timing_blank || r_video_tupple_blank)
-            ? 4'h0 
+            ? 4'hf
             : (r_cache_read_counter[0]
                 ? r_video_tupple[15:12]
                 : r_video_tupple[3:0]

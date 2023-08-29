@@ -1,6 +1,7 @@
 //
 // Created by tumap on 12/5/22.
 //
+#include <xc.h>
 #include <profile.h>
 #include <renderer.h>
 #include <video-core.h>
@@ -22,7 +23,7 @@ static tTime next_poll_time;
 // **  MODE SELECTION CONTEXT               **
 // *******************************************
 
-typedef enum taVCMode {
+typedef enum tagVCMode {
     DISPLAY_OFF,
     NORMAL,
     VIDEO
@@ -102,11 +103,15 @@ void vc_init() {
     video_uploaded = false;
     video_descriptor = NULL;
 
+    // reset
+    renderer_init();
+
 }
 
 void vc_set_render_mode(tRendererScreenGraphics *graphics) {
     target_rendering_context = graphics;
     render_state = RENDER_STATE_START;
+    last_rendering=0;
     target_mode = NORMAL;
 }
 
@@ -134,25 +139,34 @@ void vc_set_display_off() {
 #define MAX_QUEUE_LENGTH        (16*1024)
 static uint8_t command_queue[MAX_QUEUE_LENGTH];
 
+static uint8_t query_status_buffer[3];
+
 static uint8_t query_status() {
     if (!video_core_hw_idle())
         return 0;
-    static uint8_t data[3];
-    data[0] = 0;
-    data[1] = 0xff;
-    data[2] = 0xff;
-    video_core_hw_exchange(data, data, 3);
-    return data[2];
+    query_status_buffer[0] = 0;
+    query_status_buffer[1] = 0xff;
+    query_status_buffer[2] = 0xff;
+    video_core_hw_exchange(query_status_buffer, query_status_buffer, 3);
+    return query_status_buffer[2];
 }
 
 static void set_mode(uint8_t mode) {
-    static uint8_t data[2];
-    data[0] = 4;
-    data[1] = mode;
-    video_core_hw_send(NULL, 0, data, 2);
+    int i;
+    for(i=0;i<10000;i++);
+    query_status_buffer[0] = 4;
+    query_status_buffer[1] = mode;
+    query_status_buffer[2] = 0xff;
+    video_core_hw_exchange(query_status_buffer, query_status_buffer, 3);
+    Nop();
+//    set_mode_buffer[0] = 4;
+//    set_mode_buffer[1] = mode;
+//    video_core_hw_exchange(set_mode_buffer, set_mode_buffer, 2);
+//    video_core_hw_send(set_mode_buffer, 2, NULL, 0);
 }
 
-static void upload_data(const uint8_t *data, uint32_t offset, uint32_t length) {
+
+static void upload_data(uint8_t *data, uint32_t offset, uint32_t length) {
     static uint8_t prefix[4];
     prefix[0] = 0x02;
     prefix[1] = (offset >> 16) & 0xff;
@@ -173,6 +187,9 @@ static void set_video_frame() {
 typedef enum tagStatus {
     PASS, RETURN_TRUE, RETURN_FALSE
 } eStatus;
+
+// FIXME:
+void renderer_show_screen(tRendererScreenHandle screen_handle);
 
 static eStatus handle_mode(uint8_t status) {
     // get current mode
@@ -273,6 +290,11 @@ static eStatus handle_mode(uint8_t status) {
     }
 
     // new mode request?
+//    bool show_screen=false;
+//    if(target_mode!=NORMAL) {
+//        renderer_show_screen(0);
+//    }
+    
     if (target_mode != requested_mode) {
         requested_mode = target_mode;
         mode_switch_timeout = 0;
@@ -282,7 +304,7 @@ static eStatus handle_mode(uint8_t status) {
     return PASS;
 }
 
-static inline void render_texture_upload() {
+static void render_texture_upload() {
     // initialization?
     if (render_state == RENDER_STATE_START) {
         // new texture needed?
@@ -416,11 +438,11 @@ static inline void render_texture_upload() {
 #endif
 }
 
-static inline eStatus handle_rendering(uint8_t status) {
-    if (render_state != RENDER_STATE_RENDERING) {
-        render_texture_upload();
-        return RETURN_TRUE;
-    }
+static eStatus handle_rendering(uint8_t status) {
+//    if (render_state != RENDER_STATE_RENDERING) {
+//        render_texture_upload();
+//        return RETURN_TRUE;
+//    }
 
     if (last_rendering + RENDERING_PERIOD > TIME_GET)
         return RETURN_FALSE;
@@ -432,7 +454,7 @@ static inline eStatus handle_rendering(uint8_t status) {
                 MAX_QUEUE_LENGTH,
                 &size);
         if (size) {
-            static uint8_t prefix[1] = {0x01};
+            uint8_t prefix[1] = {0x01};
             video_core_hw_send(prefix, 1, command_queue, size);
             last_rendering = TIME_GET;
             return RETURN_TRUE;

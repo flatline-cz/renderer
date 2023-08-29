@@ -7,13 +7,18 @@ module VideoTimingController (
         i_master_clk,
 
         // VIDEO signals
-        o_video_hsync,
-        o_video_vsync,
-        o_video_blank,
+        o_tft_hsync_n,
+        o_tft_vsync_n,
+//        o_tft_blank,
+        o_tft_reset_n,
 
         // SYSTEM CONTROLLER interface
         i_system_enabled,
         o_system_switch_allowed,
+
+        // DEBUG
+        o_counter_h,
+        o_counter_v,
 
         // VIDEO ROW BUFFER
         o_timing_pixel_first,
@@ -24,15 +29,15 @@ module VideoTimingController (
         o_timing_prefetch_row_first_render,
         o_timing_prefetch_row_last_render
 
-
     );
 
     input       i_pixel_clk;
     input       i_master_clk;
 
-    output      o_video_hsync;
-    output      o_video_vsync;
-    output      o_video_blank;
+    output      o_tft_hsync_n;
+    output      o_tft_vsync_n;
+//    output      o_tft_blank;
+    output      o_tft_reset_n;
 
     input       i_system_enabled;
     output      o_system_switch_allowed;
@@ -45,6 +50,11 @@ module VideoTimingController (
     output      o_timing_prefetch_row_first_render;
     output      o_timing_prefetch_row_last_render;
 
+    output[10:0] o_counter_h;
+    output[9:0] o_counter_v;
+
+    // reset not used for VGA
+    assign      o_tft_reset_n = 1'b1;
 
     // ***********************************************
     // **                                           **
@@ -101,7 +111,7 @@ module VideoTimingController (
     end
 
     // export HSYNC (negative polarity)
-    assign o_video_hsync = !r_hsync;
+    assign o_tft_hsync_n = !r_hsync;
 
     assign o_timing_pixel_first = r_vertical_video_on && (r_horizontal_counter == HSYNC_PULSE + HSYNC_BACK_PORCH - 5);
     // signal: cache last pixel
@@ -154,7 +164,7 @@ module VideoTimingController (
     end
 
     // export VSYNC (negative polarity)
-    assign o_video_vsync = !r_vsync;
+    assign o_tft_vsync_n = !r_vsync;
 
     // transfer falling edge of r_vertical_video_on into single clock pulse in master clock domain
     reg[2:0]    xd_switch_allowed = 3'b0;

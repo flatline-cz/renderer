@@ -19,8 +19,8 @@ typedef struct tVideoBuffer {
 } tVideoBuffer;
 static tVideoBuffer buffer;
 
-tRendererTileHandle root_tile = RENDERER_NULL_HANDLE;
-tRendererGraphicsHandle graphics_handle = RENDERER_NULL_HANDLE;
+tRendererTileHandle root_tile;
+tRendererGraphicsHandle graphics_handle;
 
 
 static void update_tile_cache();
@@ -65,6 +65,11 @@ typedef struct tRedrawList {
     unsigned count;
     tRectangle area[REDRAW_LIST_SIZE];
 } tRedrawList;
+
+void renderer_init() {
+    root_tile=RENDERER_NULL_HANDLE;
+    graphics_handle=RENDERER_NULL_HANDLE;
+}
 
 static void compute_area_to_redraw(tVideoBuffer *buffer,
                                    tRendererTile *tile,

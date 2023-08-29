@@ -63,7 +63,7 @@ else ()
     set(FPGA_PACKAGE "ct256")
     list(APPEND FPGA_SOURCES
             ${CMAKE_CURRENT_LIST_DIR}/fpga/design/core/Prototype2.v
-            ${CMAKE_CURRENT_LIST_DIR}/fpga/design/video/VideoTimingController.v
+            ${CMAKE_CURRENT_LIST_DIR}/fpga/design/video/VideoTimingControllerVGA.v
     )
 endif ()
 

@@ -17,6 +17,7 @@ module VideoCore (
         // VIDEO OUTPUT interface
         o_video_hsync,
         o_video_vsync,
+        o_video_reset,
         o_video_red,
         o_video_green,
         o_video_blue,
@@ -43,9 +44,6 @@ module VideoCore (
     input           i_master_clk;
     input           i_pixel_clk;
 
-    // input           i_uart_rx;
-    // output          o_uart_tx;
-
     input           i_spi_cs_n;
     input           i_spi_clk;
     input           i_spi_mosi;
@@ -53,6 +51,7 @@ module VideoCore (
 
     output          o_video_vsync;
     output          o_video_hsync;
+    output          o_video_reset;
     output[3:0]     o_video_red;
     output[3:0]     o_video_green;
     output[3:0]     o_video_blue;
@@ -88,36 +87,6 @@ module VideoCore (
     // ***********************************************
 
     wire w_mcu_queue_finished;
-
-    // MCUController #(
-    //         .CLOCK_FREQ(MASTER_FREQ),
-    //         .BOUD_RATE(BOUD_RATE)
-    //     ) mcu_controller (
-    //         .i_master_clk(i_master_clk),
-
-    //         .i_uart_rx(i_uart_rx),
-    //         .o_uart_tx(o_uart_tx),
-
-    //         .i_status_vsync(w_status_vsync),
-    //         .i_status_interrupt(w_status_interrupt),
-    //         .i_status_data(w_status_data),
-    //         .o_status_request(w_status_request),
-
-    //         .o_queue_data(w_queue_fill_data),
-    //         .o_queue_data_valid(w_queue_fill_data_valid),
-    //         .o_queue_start(w_queue_fill_start),
-    //         .o_queue_end(w_queue_fill_end),
-
-    //         .o_system_mode(w_set_rendering_mode),
-    //         .o_system_mode_valid(w_set_rendering_mode_valid),
-
-    //         .o_storage_start(w_mcu_storage_start),
-    //         .o_storage_data(w_mcu_storage_data),
-    //         .o_storage_data_valid(w_mcu_storage_data_valid),
-
-    //         .o_playback_address(w_mcu_playback_address),
-    //         .o_playback_address_valid(w_mcu_playback_address_valid)
-    //     );
 
     DeviceController device_controller (
             .i_master_clk(i_master_clk),
@@ -263,8 +232,9 @@ module VideoCore (
             .i_pixel_clk(i_pixel_clk),
             .i_master_clk(i_master_clk),
 
-            .o_video_vsync(w_video_vsync),
-            .o_video_hsync(w_video_hsync),
+            .o_tft_reset_n(o_video_reset),
+            .o_tft_vsync_n(w_video_vsync),
+            .o_tft_hsync_n(w_video_hsync),
 
             .o_timing_pixel_first(w_video_timing_pixel_first),
             .o_timing_pixel_last(w_video_timing_pixel_last),

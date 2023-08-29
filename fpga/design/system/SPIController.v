@@ -124,7 +124,7 @@ module SPIController (
                 r_response_shift_register <= r_response_data;
                 r_response_data_valid <= 1'b0;
             end else begin
-                r_response_shift_register <= 8'h00;
+                r_response_shift_register <= 8'h5A;
             end
         end
 
