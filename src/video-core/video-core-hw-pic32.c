@@ -66,69 +66,69 @@ void video_core_hw_init() {
     transfer_length = 0;
 }
 
-//static void start_DMA_transfer(const void *src, uint32_t length) {
-//    // create context
-//    transfer_address = KVA_TO_PA(src);
-//    transfer_length = length;
-//    transfer_position = 0;
-//    transfer_block_size = length;
-//    if (transfer_block_size > 65536)
-//        transfer_block_size = 65536;
-//
-//    // enable DMA controller
-////    DMACONSET = _DMACON_ON_MASK;
-//
-//    // setup channel
-//    ResolveDCHxCON(FPGA_DMA) = 1;
-//    ResolveDCHxECON(FPGA_DMA) = 0;
-//    ResolveDCHxECONSET(FPGA_DMA) = (IRQ_NUMBER(SPI_TX, FPGA_SPI) << _DCH0ECON_CHSIRQ_POSITION) | _DCH0ECON_SIRQEN_MASK;
-//
-//    ResolveDCHxSSA(FPGA_DMA) = transfer_address;
-//    ResolveDCHxSSIZ(FPGA_DMA) = transfer_block_size & 0xffff;
-//    ResolveDCHxDSA(FPGA_DMA) = KVA_TO_PA(&ResolveSPIBUF(FPGA_SPI));
-//    ResolveDCHxDSIZ(FPGA_DMA) = 1;
-//    ResolveDCHxCSIZ(FPGA_DMA) = 1;
-//    ResolveDCHxINT(FPGA_DMA) = 0;
-//    ResolveDCHxCONSET(FPGA_DMA) = _DCH0CON_CHEN_MASK;
-//    ResolveDCHxECONSET(FPGA_DMA) = _DCH0ECON_CFORCE_MASK;
-//}
-//
-//static bool is_DMA_transfer_finished() {
-//    // nothing to transfer?
-//    if (transfer_length == 0)
-//        return true;
-//
-//    // transfer in progress?
-//    if (ResolveDCHxINTbits(FPGA_DMA).CHSDIF == 0)
-//        return false;
-//
-//    // update context
-//    transfer_length -= transfer_block_size;
-//    transfer_position += transfer_block_size;
-//
-//    // end of transfer?
-//    if (transfer_length == 0)
-//        return true;
-//
-//    transfer_block_size = transfer_length;
-//    if (transfer_block_size > 65536)
-//        transfer_block_size = 65536;
-//
-//    // wait until SPI is idle
-//    while (ResolveSPISTATbits(FPGA_SPI).SPITBE == 0 || ResolveSPISTATbits(FPGA_SPI).SPIBUSY == 1);
-//
-//    // initiate transfer
-//    ResolveDCHxSSA(FPGA_DMA) = transfer_address + transfer_position;
-//    ResolveDCHxSSIZ(FPGA_DMA) = transfer_block_size & 0xffff;
-//    ResolveDCHxDSA(FPGA_DMA) = KVA_TO_PA(&ResolveSPIBUF(FPGA_SPI));
-//    ResolveDCHxDSIZ(FPGA_DMA) = 1;
-//    ResolveDCHxCSIZ(FPGA_DMA) = 1;
-//    ResolveDCHxINT(FPGA_DMA) = 0;
-//    ResolveDCHxCONSET(FPGA_DMA) = _DCH0CON_CHEN_MASK;
-//    ResolveDCHxECONSET(FPGA_DMA) = _DCH0ECON_CFORCE_MASK;
-//
-//    return false;
-//}
+static void start_DMA_transfer(const void *src, uint32_t length) {
+    // create context
+    transfer_address = KVA_TO_PA(src);
+    transfer_length = length;
+    transfer_position = 0;
+    transfer_block_size = length;
+    if (transfer_block_size > 65536)
+        transfer_block_size = 65536;
+
+    // enable DMA controller
+    DMACONSET = _DMACON_ON_MASK;
+
+    // setup channel
+    ResolveDCHxCON(FPGA_DMA) = 1;
+    ResolveDCHxECON(FPGA_DMA) = 0;
+    ResolveDCHxECONSET(FPGA_DMA) = (IRQ_NUMBER(SPI_TX, FPGA_SPI) << _DCH0ECON_CHSIRQ_POSITION) | _DCH0ECON_SIRQEN_MASK;
+
+    ResolveDCHxSSA(FPGA_DMA) = transfer_address;
+    ResolveDCHxSSIZ(FPGA_DMA) = transfer_block_size & 0xffff;
+    ResolveDCHxDSA(FPGA_DMA) = KVA_TO_PA(&ResolveSPIBUF(FPGA_SPI));
+    ResolveDCHxDSIZ(FPGA_DMA) = 1;
+    ResolveDCHxCSIZ(FPGA_DMA) = 1;
+    ResolveDCHxINT(FPGA_DMA) = 0;
+    ResolveDCHxCONSET(FPGA_DMA) = _DCH0CON_CHEN_MASK;
+    ResolveDCHxECONSET(FPGA_DMA) = _DCH0ECON_CFORCE_MASK;
+}
+
+static bool is_DMA_transfer_finished() {
+    // nothing to transfer?
+    if (transfer_length == 0)
+        return true;
+
+    // transfer in progress?
+    if (ResolveDCHxINTbits(FPGA_DMA).CHSDIF == 0)
+        return false;
+
+    // update context
+    transfer_length -= transfer_block_size;
+    transfer_position += transfer_block_size;
+
+    // end of transfer?
+    if (transfer_length == 0)
+        return true;
+
+    transfer_block_size = transfer_length;
+    if (transfer_block_size > 65536)
+        transfer_block_size = 65536;
+
+    // wait until SPI is idle
+    while (ResolveSPISTATbits(FPGA_SPI).SPITBE == 0 || ResolveSPISTATbits(FPGA_SPI).SPIBUSY == 1);
+
+    // initiate transfer
+    ResolveDCHxSSA(FPGA_DMA) = transfer_address + transfer_position;
+    ResolveDCHxSSIZ(FPGA_DMA) = transfer_block_size & 0xffff;
+    ResolveDCHxDSA(FPGA_DMA) = KVA_TO_PA(&ResolveSPIBUF(FPGA_SPI));
+    ResolveDCHxDSIZ(FPGA_DMA) = 1;
+    ResolveDCHxCSIZ(FPGA_DMA) = 1;
+    ResolveDCHxINT(FPGA_DMA) = 0;
+    ResolveDCHxCONSET(FPGA_DMA) = _DCH0CON_CHEN_MASK;
+    ResolveDCHxECONSET(FPGA_DMA) = _DCH0ECON_CFORCE_MASK;
+
+    return false;
+}
 
 static void spi_xchg(uint8_t *data_send, uint8_t *data_receive, unsigned length);
 
@@ -175,15 +175,15 @@ bool video_core_hw_handle() {
             return false;
 
         state = STATE_CODE_UPLOAD;
-        spi_xchg((uint8_t*)FPGA_bit_stream, NULL, FPGA_bit_stream_len+13);
-//        start_DMA_transfer(FPGA_bit_stream, FPGA_bit_stream_len + 13);
+//        spi_xchg((uint8_t*)FPGA_bit_stream, NULL, FPGA_bit_stream_len+13);
+        start_DMA_transfer(FPGA_bit_stream, FPGA_bit_stream_len + 13);
         return true;
     }
 
     // uploading code?
     if (state == STATE_CODE_UPLOAD) {
-//        if (!is_DMA_transfer_finished())
-//            return false;
+        if (!is_DMA_transfer_finished())
+            return false;
         state = STATE_CODE_UPLOADED;
         ResolveLAT(FPGA_CS_PIN) = 1;
         timeout = TIME_GET + 2;
