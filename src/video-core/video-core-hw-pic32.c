@@ -188,15 +188,15 @@ bool video_core_hw_handle() {
             return false;
 
         state = STATE_CODE_UPLOAD;
-//        spi_xchg((uint8_t*)FPGA_bit_stream, NULL, FPGA_bit_stream_len+13);
-        start_DMA_transfer(FPGA_bit_stream, FPGA_bit_stream_len + 13);
+        spi_xchg((uint8_t*)FPGA_bit_stream, NULL, FPGA_bit_stream_len+13);
+//        start_DMA_transfer(FPGA_bit_stream, FPGA_bit_stream_len + 13);
         return true;
     }
 
     // uploading code?
     if (state == STATE_CODE_UPLOAD) {
-        if (!is_DMA_transfer_finished())
-            return false;
+//        if (!is_DMA_transfer_finished())
+//            return false;
         state = STATE_CODE_UPLOADED;
         ResolveLAT(FPGA_CS_PIN) = 1;
         timeout = TIME_GET + 2;
