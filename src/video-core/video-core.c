@@ -468,7 +468,7 @@ static eStatus handle_rendering(uint8_t status) {
         return RETURN_FALSE;
 
     if (status & 0x02) {
-        uint16_t size;
+        uint16_t size=0;
         renderer_update_display(
                 command_queue,
                 MAX_QUEUE_LENGTH,

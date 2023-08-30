@@ -86,7 +86,8 @@ module FPGA (
     // VideoCore instance
     VideoCore #(
             .MASTER_FREQ(MASTER_FREQ),
-            .BOUD_RATE(BOUD_RATE)
+            .BOUD_RATE(BOUD_RATE),
+            .flip(0)
         ) video_core (
             .i_pixel_clk(w_pixel_clk),
             .i_master_clk(w_master_clk),
@@ -102,9 +103,9 @@ module FPGA (
             .o_video_vsync(vsync_o),
             .o_video_hsync(hsync_o),
 
-            .o_video_red(blue),
+            .o_video_red(red),
             .o_video_green(green),
-            .o_video_blue(red),
+            .o_video_blue(blue),
 
             .o_sram_address(M1A),
             .o_sram_data_out(w_sram_data_out),

@@ -225,7 +225,7 @@ static void redraw_tile(tVideoBuffer *buffer, tRendererTile *tile,
                                 tile->color,
                                 &tile->texture,
                                 x1 - tile->position_left,
-                                y1 - tile->position_top, \
+                                y1 - tile->position_top,
                                 queue_data, queue_size, queue_length);
             break;
         case COLOR:

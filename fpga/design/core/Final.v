@@ -146,7 +146,7 @@ module FPGA (
     assign M1OE = 1'b1;
     assign M1OE1 = m_oe;
 
-    VideoCore video_core (
+    VideoCore #( .flip(1)) video_core (
             .i_pixel_clk(w_pixel_clk),
             .i_master_clk(w_master_clk),
 

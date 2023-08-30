@@ -1,5 +1,6 @@
 
-module VideoCore (
+module VideoCore #(parameter flip = 0)
+    (
         // clocks
         i_master_clk,
         i_pixel_clk,
@@ -257,7 +258,7 @@ module VideoCore (
     // **                                           **
     // ***********************************************
 
-    VideoRowBuffer video_row_buffer (
+    VideoRowBuffer #( .flip(flip)) video_row_buffer (
             .i_pixel_clk(i_pixel_clk),
             .i_master_clk(i_master_clk),
 
