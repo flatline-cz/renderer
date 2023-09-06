@@ -88,7 +88,7 @@ typedef struct tRendererFontGlyph {
 
 typedef struct tRendererFont {
     uint16_t glyph_count;
-    tRendererFontGlyph *glyphs;
+    uint16_t first_glyph;
     uint16_t space_width;
 } tRendererFont;
 
@@ -102,8 +102,8 @@ typedef enum eRendererVAlignment {
 
 typedef struct tRendererText {
     uint16_t tile_count;
-    tRendererTileHandle *tile;
-    tRendererFont *font;
+    tRendererTileHandle tile;
+    uint16_t font;
     tRendererPosition position_x;
     tRendererPosition position_y;
     eRendererHAlignment alignment_h;
@@ -130,6 +130,12 @@ typedef struct tRendererScreen {
 
 extern uint16_t *renderer_colors;
 extern uint16_t renderer_colors_simple_count;
+
+extern tRendererFontGlyph *renderer_font_glyphs;
+extern uint16_t renderer_font_glyphs_count;
+
+extern tRendererFont * renderer_fonts;
+extern uint16_t renderer_fonts_count;
 
 extern tRendererText *renderer_texts;
 extern uint16_t renderer_texts_count;

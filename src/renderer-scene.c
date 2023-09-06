@@ -3,6 +3,7 @@
 //
 #include "renderer.h"
 #include "renderer-definition.h"
+#include "trace.h"
 
 
 static inline tRendererColor map_color(tRendererColorHandle handle);
@@ -60,9 +61,14 @@ static uint32_t utf_nextchar(const char *s, unsigned *i) {
 }
 
 void renderer_set_text(tRendererTileHandle tile_handle, const char *text) {
+    if(tile_handle>=renderer_texts_count) {
+        TRACE("renderer_set_text: Invalid text handle");
+        return;
+    }
 
     // find text definition
     tRendererText *text_definition = renderer_texts + tile_handle;
+    tRendererFont *font = renderer_fonts + text_definition->font;
 
     // layout all characters
     unsigned character_index = 0;
@@ -75,24 +81,24 @@ void renderer_set_text(tRendererTileHandle tile_handle, const char *text) {
 
         // space?
         if (code_point == ' ') {
-            x += text_definition->font->space_width;
+            x += font->space_width;
             continue;
         }
 
         // find glyph
         tRendererFontGlyph *glyph;
-        for (glyph = text_definition->font->glyphs, i = text_definition->font->glyph_count; i > 0; i--, glyph++) {
+        for (glyph = renderer_font_glyphs + font->first_glyph, i = font->glyph_count; i > 0; i--, glyph++) {
             if (glyph->code_point == code_point)
                 break;
         }
         if (i == 0) {
             // unknown code point -> show space
-            x += text_definition->font->space_width;
+            x += font->space_width;
             continue;
         }
 
         // set character tile coordinates & texture
-        tRendererTile *tile = renderer_tiles + text_definition->tile[character_index];
+        tRendererTile *tile = renderer_tiles + text_definition->tile + character_index;
         tile->tile_visible = true;
         tile->position_top = text_definition->position_y + glyph->offset_y;
         tile->position_left = x + glyph->offset_x;
@@ -110,7 +116,7 @@ void renderer_set_text(tRendererTileHandle tile_handle, const char *text) {
     }
 
     while (character_index < text_definition->tile_count) {
-        tRendererTile *tile = renderer_tiles + text_definition->tile[character_index++];
+        tRendererTile *tile = renderer_tiles + text_definition->tile + character_index++;
         tile->tile_visible = false;
     }
 
@@ -121,7 +127,7 @@ void renderer_set_text(tRendererTileHandle tile_handle, const char *text) {
     if (text_definition->alignment_h == TEXT_CENTER)
         deltaX -= x / 2;
     for (character_index = 0; character_index < text_definition->tile_count; character_index++) {
-        tRendererTile *tile = renderer_tiles + text_definition->tile[character_index];
+        tRendererTile *tile = renderer_tiles + text_definition->tile + character_index;
         tile->position_left += deltaX;
         tile->position_right += deltaX;
     }
