@@ -10,7 +10,7 @@ set(RENDERER_SOURCES
         ${CMAKE_CURRENT_LIST_DIR}/binding/binding-canbus-register.c
         ${CMAKE_CURRENT_LIST_DIR}/src/video-core/video-core.c
         ${CMAKE_CURRENT_LIST_DIR}/src/video-core/data-upload.c
-        ${CMAKE_CURRENT_LIST_DIR}/src/scene-decoder/decoder.c
+        ${CMAKE_CURRENT_LIST_DIR}/src/scene-decoder/scene-decoder.c
         ${CMAKE_BINARY_DIR}/fpga-bit-stream.c
 )
 

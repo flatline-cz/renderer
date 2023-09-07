@@ -4,6 +4,8 @@
 #include "system-config.h"
 #include "data-upload.h"
 #include "spi-flash.h"
+#include "scene-decoder.h"
+#include "memcpy.h"
 
 static tUploadDataRequest *current;
 static uint32_t position;
@@ -39,7 +41,7 @@ void upload_data_init() {
 
 void upload_data_start(tUploadDataRequest *request) {
     current = request;
-    current->finished=false;
+    current->finished = false;
     position = 0;
 
     bufferA.position = 0;
@@ -60,7 +62,12 @@ static inline void start_reading(tBuffer *buffer) {
     read_request.bank = FLASH_BANK_SCENE;
     read_request.address = current->source_addr + buffer->position;
     read_request.length = buffer->length;
-    spi_flash_read(&read_request);
+    if (scene_decoder_use_default()) {
+        memcpy(read_request.buffer, renderer_data + read_request.address, read_request.length);
+        read_request.status = SPI_FLASH_DONE;
+    } else {
+        spi_flash_read(&read_request);
+    }
 }
 
 bool upload_data_handle() {
@@ -111,9 +118,9 @@ bool upload_data_handle() {
 //    }
 
     // upload buffer A?
-    if(bufferA.state==BUFFER_STATE_READ) {
-        current->uploadDataRoutine(bufferA.buffer, current->target_addr+bufferA.position, bufferA.length);
-        bufferA.state=BUFFER_STATE_UPLOADING;
+    if (bufferA.state == BUFFER_STATE_READ) {
+        current->uploadDataRoutine(bufferA.buffer, current->target_addr + bufferA.position, bufferA.length);
+        bufferA.state = BUFFER_STATE_UPLOADING;
     }
 
 //    // upload buffer B?

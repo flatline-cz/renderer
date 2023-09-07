@@ -9,7 +9,7 @@
 #include <can.h>
 #include "canbus-constants.h"
 
-#define BINDING_CANBUS_MAX_FIELDS       16
+#define BINDING_CANBUS_MAX_FIELDS       32
 
 typedef struct tagBindingCANBUSField {
     uint8_t type;

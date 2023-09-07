@@ -2,20 +2,14 @@
 // Created by tumap on 6/1/23.
 //
 #include <stdbool.h>
-#include "decoder.h"
+#include "scene-decoder.h"
 #include "renderer-definition.h"
 #include "spi-flash.h"
 #include "system-config.h"
+#include "trace.h"
+#include "memcpy.h"
 
-#ifndef PIC32
-
-#   include <stdio.h>
-#   include "profile.h"
-
-#   define TRACE(msg, ...) fprintf(stderr, "%d.%03ds : "  msg  "\n", TIME_GET/1000, TIME_GET%1000, ##__VA_ARGS__);
-#else
-#   define TRACE(msg, ...)
-#endif
+static bool use_default;
 
 #define BUFFER_LENGTH                   256
 static uint8_t input_buffer[BUFFER_LENGTH];
@@ -46,10 +40,14 @@ uint16_t renderer_font_glyphs_count;
 tRendererFont *renderer_fonts;
 uint16_t renderer_fonts_count;
 
-static inline void input_init() {
+static inline bool input_init(bool custom) {
     input_position = 8;
     input_buffer_start = 0;
-    spi_flash_read_sync(FLASH_BANK_SCENE, 0, input_buffer, BUFFER_LENGTH);
+    if (custom) {
+        spi_flash_read_sync(FLASH_BANK_SCENE, 0, input_buffer, BUFFER_LENGTH);
+    } else {
+        memcpy(input_buffer, renderer_data, BUFFER_LENGTH);
+    }
     if (((((uint32_t) input_buffer[0]) << 0) |
          (((uint32_t) input_buffer[1]) << 8) |
          (((uint32_t) input_buffer[2]) << 16) |
@@ -60,9 +58,10 @@ static inline void input_init() {
                 (((uint32_t) input_buffer[6]) << 16) |
                 (((uint32_t) input_buffer[7]) << 24);
     } else {
-        input_data_length = 0;
+        return false;
     }
     memory_size = 0;
+    return true;
 }
 
 static inline void *__attribute((always_inline)) allocate(unsigned size, unsigned alignment) {
@@ -81,41 +80,44 @@ static inline void *__attribute((always_inline)) allocate(unsigned size, unsigne
     return ret;
 }
 
-static inline bool input_get_byte(uint8_t *buffer) {
+static inline bool input_get_byte(bool custom, uint8_t *buffer) {
     if (input_position >= input_data_length)
         return false;
     if (input_position - input_buffer_start >= BUFFER_LENGTH) {
         input_buffer_start += BUFFER_LENGTH;
-        spi_flash_read_sync(FLASH_BANK_SCENE, input_buffer_start, input_buffer, BUFFER_LENGTH);
+        if (custom)
+            spi_flash_read_sync(FLASH_BANK_SCENE, input_buffer_start, input_buffer, BUFFER_LENGTH);
+        else
+            memcpy(input_buffer, renderer_data + input_buffer_start, BUFFER_LENGTH);
     }
     *buffer = input_buffer[input_position - input_buffer_start];
     input_position++;
     return true;
 }
 
-static inline bool input_get_word(uint16_t *buffer) {
+static inline bool input_get_word(bool custom, uint16_t *buffer) {
     uint8_t b1;
     uint8_t b2;
-    if (!input_get_byte(&b1))
+    if (!input_get_byte(custom, &b1))
         return false;
-    if (!input_get_byte(&b2))
+    if (!input_get_byte(custom, &b2))
         return false;
     *buffer = (((uint16_t) b2) << 8) | b1;
     return true;
 }
 
-static inline bool input_get_dword(uint32_t *buffer) {
+static inline bool input_get_dword(bool custom, uint32_t *buffer) {
     uint8_t b1;
     uint8_t b2;
     uint8_t b3;
     uint8_t b4;
-    if (!input_get_byte(&b1))
+    if (!input_get_byte(custom, &b1))
         return false;
-    if (!input_get_byte(&b2))
+    if (!input_get_byte(custom, &b2))
         return false;
-    if (!input_get_byte(&b3))
+    if (!input_get_byte(custom, &b3))
         return false;
-    if (!input_get_byte(&b4))
+    if (!input_get_byte(custom, &b4))
         return false;
     *buffer =
             (((uint32_t) b1) << 0) |
@@ -125,9 +127,9 @@ static inline bool input_get_dword(uint32_t *buffer) {
     return true;
 }
 
-static bool decode_color_table() {
+static bool decode_color_table(bool custom) {
     // number of colors
-    if (!input_get_word(&renderer_colors_simple_count))
+    if (!input_get_word(custom, &renderer_colors_simple_count))
         return false;
 
     // allocate memory
@@ -136,20 +138,20 @@ static bool decode_color_table() {
     // fill color table
     unsigned i;
     for (i = 0; i < renderer_colors_simple_count; i++) {
-        if (!input_get_word(renderer_colors + i))
+        if (!input_get_word(custom, renderer_colors + i))
             return false;
     }
 
     return true;
 }
 
-static bool decode_texture(tRendererTexture *tex) {
-    if (!input_get_dword(&tex->base))
+static bool decode_texture(bool custom, tRendererTexture *tex) {
+    if (!input_get_dword(custom, &tex->base))
         return false;
-    if (!input_get_word(&tex->stripe_length))
+    if (!input_get_word(custom, &tex->stripe_length))
         return false;
     uint8_t texture_compression;
-    if (!input_get_byte(&texture_compression))
+    if (!input_get_byte(custom, &texture_compression))
         return false;
     if (texture_compression >= 2)
         return false;
@@ -157,9 +159,9 @@ static bool decode_texture(tRendererTexture *tex) {
     return true;
 }
 
-static bool decode_tiles() {
+static bool decode_tiles(bool custom) {
     // number of tiles
-    if (!input_get_word(&renderer_tiles_count))
+    if (!input_get_word(custom, &renderer_tiles_count))
         return false;
 
     // allocate memory
@@ -171,26 +173,26 @@ static bool decode_tiles() {
         tRendererTile *tile = renderer_tiles + i;
 
         // decode tree structure field
-        if (!input_get_word(&tile->root_tile))
+        if (!input_get_word(custom, &tile->root_tile))
             return false;
-        if (!input_get_word(&tile->parent_tile))
+        if (!input_get_word(custom, &tile->parent_tile))
             return false;
-        if (!input_get_word(&tile->children_count))
+        if (!input_get_word(custom, &tile->children_count))
             return false;
-        if (!input_get_word(&tile->children_list_index))
+        if (!input_get_word(custom, &tile->children_list_index))
             return false;
 
         // position
-        if (!input_get_word(&tile->position_left))
+        if (!input_get_word(custom, &tile->position_left))
             return false;
-        if (!input_get_word(&tile->position_top))
+        if (!input_get_word(custom, &tile->position_top))
             return false;
-        if (!input_get_word(&tile->position_width))
+        if (!input_get_word(custom, &tile->position_width))
             return false;
-        if (!input_get_word(&tile->position_height))
+        if (!input_get_word(custom, &tile->position_height))
             return false;
         uint8_t visible;
-        if (!input_get_byte(&visible))
+        if (!input_get_byte(custom, &visible))
             return false;
         tile->tile_visible = visible == 1;
 
@@ -199,7 +201,7 @@ static bool decode_tiles() {
         tile->position_bottom = tile->position_top + tile->position_height - 1;
 
         // color
-        if (!input_get_word(&tile->color_handle))
+        if (!input_get_word(custom, &tile->color_handle))
             return false;
         // FIXME: map handle to color
         uint16_t color = renderer_colors[tile->color_handle];
@@ -210,7 +212,7 @@ static bool decode_tiles() {
 
         // decode tile type
         uint8_t tile_type;
-        if (!input_get_byte(&tile_type))
+        if (!input_get_byte(custom, &tile_type))
             return false;
         switch (tile_type) {
             case 0:
@@ -225,25 +227,21 @@ static bool decode_tiles() {
 
         // decode texture properties
         if (tile_type == 1) {
-            if (!decode_texture(&tile->texture))
+            if (!decode_texture(custom, &tile->texture))
                 return false;
         }
 
         // FIXME: decode tile visual properties
         tile->overlapping_children = false;
         tile->parent_visible = true;
-
-
-        // FIXME: decode text properties
-
     }
 
     return true;
 }
 
-static bool decode_screens() {
+static bool decode_screens(bool custom) {
     // number of screens
-    if (!input_get_word(&renderer_screen_count))
+    if (!input_get_word(custom, &renderer_screen_count))
         return false;
 
     // allocate memory
@@ -252,20 +250,20 @@ static bool decode_screens() {
     // fill screen table
     int i;
     for (i = 0; i < renderer_screen_count; i++) {
-        if (!input_get_word(&renderer_screens[i].root_tile))
+        if (!input_get_word(custom, &renderer_screens[i].root_tile))
             return false;
-        if (!input_get_word(&renderer_screens[i].graphics))
+        if (!input_get_word(custom, &renderer_screens[i].graphics))
             return false;
     }
 
     return true;
 }
 
-static bool decode_child_index() {
+static bool decode_child_index(bool custom) {
 
     // index records
     uint16_t count;
-    if (!input_get_word(&count))
+    if (!input_get_word(custom, &count))
         return false;
 
     // allocate memory
@@ -274,16 +272,16 @@ static bool decode_child_index() {
     // fill index
     int i;
     for (i = 0; i < count; i++) {
-        if (!input_get_word(renderer_child_index + i))
+        if (!input_get_word(custom, renderer_child_index + i))
             return false;
     }
 
     return true;
 }
 
-static bool decode_font_glyphs() {
+static bool decode_font_glyphs(bool custom) {
     // number of glyphs
-    if (!input_get_word(&renderer_font_glyphs_count))
+    if (!input_get_word(custom, &renderer_font_glyphs_count))
         return false;
 
     // allocate memory
@@ -292,28 +290,28 @@ static bool decode_font_glyphs() {
     // fetch each glyphs
     int i;
     for (i = 0; i < renderer_font_glyphs_count; i++) {
-        if (!input_get_word(&renderer_font_glyphs[i].code_point))
+        if (!input_get_word(custom, &renderer_font_glyphs[i].code_point))
             return false;
-        if (!input_get_word(&renderer_font_glyphs[i].width))
+        if (!input_get_word(custom, &renderer_font_glyphs[i].width))
             return false;
-        if (!input_get_word(&renderer_font_glyphs[i].height))
+        if (!input_get_word(custom, &renderer_font_glyphs[i].height))
             return false;
-        if (!input_get_word((uint16_t *) &renderer_font_glyphs[i].offset_x))
+        if (!input_get_word(custom, (uint16_t *) &renderer_font_glyphs[i].offset_x))
             return false;
-        if (!input_get_word((uint16_t *) &renderer_font_glyphs[i].offset_y))
+        if (!input_get_word(custom, (uint16_t *) &renderer_font_glyphs[i].offset_y))
             return false;
-        if (!input_get_word(&renderer_font_glyphs[i].advance_x))
+        if (!input_get_word(custom, &renderer_font_glyphs[i].advance_x))
             return false;
-        if (!decode_texture(&renderer_font_glyphs[i].texture))
+        if (!decode_texture(custom, &renderer_font_glyphs[i].texture))
             return false;
     }
 
     return true;
 }
 
-static bool decode_fonts() {
+static bool decode_fonts(bool custom) {
     // number of fonts
-    if (!input_get_word(&renderer_fonts_count))
+    if (!input_get_word(custom, &renderer_fonts_count))
         return false;
 
     // allocate memory
@@ -322,28 +320,28 @@ static bool decode_fonts() {
     // fetch each font
     int i;
     for (i = 0; i < renderer_fonts_count; i++) {
-        if (!input_get_word(&renderer_fonts[i].glyph_count))
+        if (!input_get_word(custom, &renderer_fonts[i].glyph_count))
             return false;
-        if (!input_get_word(&renderer_fonts[i].first_glyph))
+        if (!input_get_word(custom, &renderer_fonts[i].first_glyph))
             return false;
-        if (!input_get_word(&renderer_fonts[i].space_width))
+        if (!input_get_word(custom, &renderer_fonts[i].space_width))
             return false;
     }
 
     return true;
 }
 
-static bool decode_texts() {
+static bool decode_texts(bool custom) {
     // length of all texts
     uint16_t texts_length;
-    if (!input_get_word(&texts_length))
+    if (!input_get_word(custom, &texts_length))
         return false;
 
     // allocate memory for texts
     uint16_t *texts = allocate(texts_length * 2, 2);
 
     // number of texts
-    if (!input_get_word(&renderer_texts_count))
+    if (!input_get_word(custom, &renderer_texts_count))
         return false;
 
     // allocate memory
@@ -352,18 +350,18 @@ static bool decode_texts() {
     // fetch each text
     int i, j;
     for (i = 0; i < renderer_texts_count; i++) {
-        if (!input_get_word(&renderer_texts[i].tile_count))
+        if (!input_get_word(custom, &renderer_texts[i].tile_count))
             return false;
-        if (!input_get_word(&renderer_texts[i].tile))
+        if (!input_get_word(custom, &renderer_texts[i].tile))
             return false;
-        if (!input_get_word(&renderer_texts[i].font))
+        if (!input_get_word(custom, &renderer_texts[i].font))
             return false;
-        if (!input_get_word(&renderer_texts[i].position_x))
+        if (!input_get_word(custom, &renderer_texts[i].position_x))
             return false;
-        if (!input_get_word(&renderer_texts[i].position_y))
+        if (!input_get_word(custom, &renderer_texts[i].position_y))
             return false;
         uint8_t b;
-        if (!input_get_byte(&b))
+        if (!input_get_byte(custom, &b))
             return false;
         switch (b) {
             case 1:
@@ -377,7 +375,7 @@ static bool decode_texts() {
                 renderer_texts[i].alignment_h = TEXT_LEFT;
                 break;
         }
-        if (!input_get_byte(&b))
+        if (!input_get_byte(custom, &b))
             return false;
         switch (b) {
             case 1:
@@ -393,7 +391,7 @@ static bool decode_texts() {
         }
         renderer_texts[i].text = texts;
         for (j = 0; j < renderer_texts[i].tile_count; j++) {
-            if (!input_get_word(texts))
+            if (!input_get_word(custom, texts))
                 return false;
             texts++;
         }
@@ -402,10 +400,10 @@ static bool decode_texts() {
     return true;
 }
 
-static bool decode_texture_bundles() {
+static bool decode_texture_bundles(bool custom) {
 
     // count
-    if (!input_get_word(&renderer_graphics_count))
+    if (!input_get_word(custom, &renderer_graphics_count))
         return false;
 
     // allocate memory
@@ -415,71 +413,76 @@ static bool decode_texture_bundles() {
 
     // read each record
     for (i = 0; i < renderer_graphics_count; i++) {
-        if (!input_get_dword(&renderer_graphics[i].base))
+        if (!input_get_dword(custom, &renderer_graphics[i].base))
             return false;
 
-        if (!input_get_dword(&renderer_graphics[i].length))
+        if (!input_get_dword(custom, &renderer_graphics[i].length))
             return false;
     }
 
     return true;
 }
 
+bool scene_decoder_use_default() {
+    return use_default;
+}
 
-bool scene_decoder_decode() {
+bool scene_decoder_decode(bool custom) {
+    use_default=!custom;
+
     TRACE("Decoding started")
-    input_init();
+    if (!input_init(custom))
+        return false;
 
     // create color table
-    if (!decode_color_table()) {
-        TRACE("Scene decoder: Invalid color table");
+    if (!decode_color_table(custom)) {
+        TRACE("Scene decoder: Invalid color table")
         return false;
     }
 
     // decode tiles
-    if (!decode_tiles()) {
-        TRACE("Scene decoder: Invalid tile list");
+    if (!decode_tiles(custom)) {
+        TRACE("Scene decoder: Invalid tile list")
         return false;
     }
 
     // decode screens
-    if (!decode_screens()) {
-        TRACE("Scene decoder: Invalid screen list");
+    if (!decode_screens(custom)) {
+        TRACE("Scene decoder: Invalid screen list")
         return false;
     }
 
     // decode node child index
-    if (!decode_child_index()) {
-        TRACE("Scene decoder: Invalid child index");
+    if (!decode_child_index(custom)) {
+        TRACE("Scene decoder: Invalid child index")
         return false;
     }
 
     // decode font glyphs
-    if (!decode_font_glyphs()) {
-        TRACE("Scene decoder: Invalid glyph list");
+    if (!decode_font_glyphs(custom)) {
+        TRACE("Scene decoder: Invalid glyph list")
         return false;
     }
 
     // decode fonts
-    if (!decode_fonts()) {
-        TRACE("Scene decoder: Invalid font list");
+    if (!decode_fonts(custom)) {
+        TRACE("Scene decoder: Invalid font list")
         return false;
     }
 
     // decode texts
-    if (!decode_texts()) {
-        TRACE("Scene decoder: Invalid text list");
+    if (!decode_texts(custom)) {
+        TRACE("Scene decoder: Invalid text list")
         return false;
     }
 
     //decode graphics contexts
-    if (!decode_texture_bundles()) {
-        TRACE("Scene decoder: Invalid texture bundles");
+    if (!decode_texture_bundles(custom)) {
+        TRACE("Scene decoder: Invalid texture bundles")
         return false;
     }
 
-    // TODO:
-//    renderer_texts_count = 0;
+    // TODO: video index decoding
     renderer_videos_count = 0;
 
     TRACE("Decoding finished, memory used = %d bytes", memory_size)
