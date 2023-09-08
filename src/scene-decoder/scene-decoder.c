@@ -128,6 +128,7 @@ static inline bool input_get_dword(bool custom, uint32_t *buffer) {
 }
 
 static bool decode_color_table(bool custom) {
+    TRACE("- Decoding color table")
     // number of colors
     if (!input_get_word(custom, &renderer_colors_simple_count))
         return false;
@@ -141,6 +142,8 @@ static bool decode_color_table(bool custom) {
         if (!input_get_word(custom, renderer_colors + i))
             return false;
     }
+
+    TRACE("- Decoded %d colors", renderer_colors_simple_count)
 
     return true;
 }
@@ -156,10 +159,12 @@ static bool decode_texture(bool custom, tRendererTexture *tex) {
     if (texture_compression >= 2)
         return false;
     tex->packed_alpha = (texture_compression == 1);
+    TRACE("-- Decoded texture at 0x%08X", tex->base)
     return true;
 }
 
 static bool decode_tiles(bool custom) {
+    TRACE("- Decoding tiles")
     // number of tiles
     if (!input_get_word(custom, &renderer_tiles_count))
         return false;
@@ -236,10 +241,13 @@ static bool decode_tiles(bool custom) {
         tile->parent_visible = true;
     }
 
+    TRACE("- Decoded %d tiles", renderer_tiles_count)
+
     return true;
 }
 
 static bool decode_screens(bool custom) {
+    TRACE("- Decoding screens")
     // number of screens
     if (!input_get_word(custom, &renderer_screen_count))
         return false;
@@ -256,10 +264,13 @@ static bool decode_screens(bool custom) {
             return false;
     }
 
+    TRACE("- Decoded %d screens", renderer_screen_count)
+
     return true;
 }
 
 static bool decode_child_index(bool custom) {
+    TRACE("- Decoding tile tree")
 
     // index records
     uint16_t count;
@@ -276,13 +287,22 @@ static bool decode_child_index(bool custom) {
             return false;
     }
 
+    TRACE("- Decoded %d records", count)
+
     return true;
 }
 
 static bool decode_font_glyphs(bool custom) {
+    TRACE("- Decoding font glyphs")
     // number of glyphs
     if (!input_get_word(custom, &renderer_font_glyphs_count))
         return false;
+
+    if (!renderer_font_glyphs_count) {
+        TRACE("- No font glyphs")
+        renderer_font_glyphs = NULL;
+        return true;
+    }
 
     // allocate memory
     renderer_font_glyphs = allocate(sizeof(tRendererFontGlyph) * renderer_font_glyphs_count, 4);
@@ -306,13 +326,21 @@ static bool decode_font_glyphs(bool custom) {
             return false;
     }
 
+    TRACE("- Decoded %d font glyphs", renderer_font_glyphs_count)
     return true;
 }
 
 static bool decode_fonts(bool custom) {
+    TRACE("- Decoding fonts")
     // number of fonts
     if (!input_get_word(custom, &renderer_fonts_count))
         return false;
+
+    if (!renderer_fonts_count) {
+        TRACE("- No fonts")
+        renderer_fonts = NULL;
+        return true;
+    }
 
     // allocate memory
     renderer_fonts = allocate(sizeof(tRendererFont) * renderer_fonts_count, 4);
@@ -328,21 +356,34 @@ static bool decode_fonts(bool custom) {
             return false;
     }
 
+    TRACE("- Decoded %d fonts", renderer_fonts_count)
+
     return true;
 }
 
 static bool decode_texts(bool custom) {
+    TRACE("- Decoding texts")
+
     // length of all texts
     uint16_t texts_length;
     if (!input_get_word(custom, &texts_length))
         return false;
 
-    // allocate memory for texts
-    uint16_t *texts = allocate(texts_length * 2, 2);
-
     // number of texts
     if (!input_get_word(custom, &renderer_texts_count))
         return false;
+
+    if (!renderer_texts_count) {
+        TRACE("- No texts")
+        renderer_texts = NULL;
+        return true;
+    }
+
+    if (!texts_length)
+        return false;
+
+    // allocate memory for texts
+    uint16_t *texts = allocate(texts_length * 2, 2);
 
     // allocate memory
     renderer_texts = allocate(sizeof(tRendererText) * renderer_texts_count, 4);
@@ -397,10 +438,13 @@ static bool decode_texts(bool custom) {
         }
     }
 
+    TRACE("- Decoded %d texts", renderer_texts_count)
+
     return true;
 }
 
 static bool decode_texture_bundles(bool custom) {
+    TRACE("- Decoding texture bundles")
 
     // count
     if (!input_get_word(custom, &renderer_graphics_count))
@@ -418,7 +462,11 @@ static bool decode_texture_bundles(bool custom) {
 
         if (!input_get_dword(custom, &renderer_graphics[i].length))
             return false;
+        TRACE("-- Decoded bundle #%d addr=0x%08X, length=0x%08X", i,
+              renderer_graphics[i].base, renderer_graphics[i].length)
     }
+
+    TRACE("- Decoded %d texture bundles", renderer_graphics_count)
 
     return true;
 }
@@ -428,7 +476,7 @@ bool scene_decoder_use_default() {
 }
 
 bool scene_decoder_decode(bool custom) {
-    use_default=!custom;
+    use_default = !custom;
 
     TRACE("Decoding started")
     if (!input_init(custom))
