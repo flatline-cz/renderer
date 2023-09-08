@@ -31,7 +31,7 @@ static uint8_t video_buffer[VIDEO_CORE_BUFFER_SIZE];
 static unsigned video_buffer_length;
 
 
-static void vc_cmd_rect_color(tRendererPosition left,
+void vc_cmd_rect_color(tRendererPosition left,
                               tRendererPosition top,
                               tRendererPosition width,
                               tRendererPosition height,
@@ -320,7 +320,7 @@ static void vc_cmd_color(tRendererColor color,
     buffer[(*length)++] = red | (alpha << 4);
 }
 
-static void vc_cmd_rect_color(tRendererPosition left,
+void vc_cmd_rect_color(tRendererPosition left,
                               tRendererPosition top,
                               tRendererPosition width,
                               tRendererPosition height,

@@ -56,13 +56,16 @@ static tTime last_rendering;
 //static uint8_t data_bufferB[BUFFER_SIZE];
 
 // rendering textures
+static bool clear_screen;
 static tRendererScreenGraphics *current_rendering_context;
 static tRendererScreenGraphics *target_rendering_context;
 #define RENDER_STATE_START              0
-#define RENDER_STATE_UPLOAD_TEXTURE     1
-#define RENDER_STATE_RENDERING          2
-#define RENDER_STATE_UPLOAD_VIDEO       3
-#define RENDER_STATE_PLAYBACK           4
+#define RENDER_STATE_CLEAR_SCREEN       1
+#define RENDER_STATE_CLEAR_SCREEN_WAIT  2
+#define RENDER_STATE_UPLOAD_TEXTURE     3
+#define RENDER_STATE_RENDERING          4
+#define RENDER_STATE_UPLOAD_VIDEO       5
+#define RENDER_STATE_PLAYBACK           6
 static int render_state;
 static tUploadDataRequest texture_request;
 
@@ -79,6 +82,15 @@ static uint16_t video_frame;
 static tRendererVideoDescriptor *video_descriptor;
 static rRendererVideoCallback video_callback;
 static const void *video_callback_arg;
+
+void vc_cmd_rect_color(tRendererPosition left,
+                       tRendererPosition top,
+                       tRendererPosition width,
+                       tRendererPosition height,
+                       tRendererColor color,
+                       uint8_t *buffer,
+                       uint16_t max_length,
+                       uint16_t *length);
 
 // *******************************************
 // **  INITIALIZATION ROUTINE               **
@@ -98,6 +110,7 @@ void vc_init() {
     mode_switch_retry = 0;
 
     // reset rendering context
+    clear_screen = true;
     current_rendering_context = NULL;
     target_rendering_context = NULL;
     last_rendering = 0;
@@ -113,7 +126,8 @@ void vc_init() {
 
 void vc_set_render_mode(tRendererScreenGraphics *graphics) {
     target_rendering_context = graphics;
-    render_state = RENDER_STATE_START;
+    render_state = clear_screen ? RENDER_STATE_CLEAR_SCREEN : RENDER_STATE_START;
+    clear_screen = false;
     last_rendering = 0;
     target_mode = NORMAL;
 }
@@ -157,7 +171,7 @@ static uint8_t query_status() {
 static uint8_t set_mode_buffer[2];
 
 static void set_mode(uint8_t mode) {
-    if(!video_core_hw_idle())
+    if (!video_core_hw_idle())
         return;
     set_mode_buffer[0] = 4;
     set_mode_buffer[1] = mode;
@@ -167,7 +181,7 @@ static void set_mode(uint8_t mode) {
 static uint8_t upload_data_buffer[4];
 
 static void upload_data(uint8_t *data, uint32_t offset, uint32_t length) {
-    if(!video_core_hw_idle())
+    if (!video_core_hw_idle())
         return;
     upload_data_buffer[0] = 0x02;
     upload_data_buffer[1] = (offset >> 16) & 0xff;
@@ -179,7 +193,7 @@ static void upload_data(uint8_t *data, uint32_t offset, uint32_t length) {
 static uint8_t set_video_frame_buffer[4];
 
 static void set_video_frame() {
-    if(!video_core_hw_idle())
+    if (!video_core_hw_idle())
         return;
     set_video_frame_buffer[0] = 0x03;
     set_video_frame_buffer[1] = (video_descriptor->frame_offsets[video_frame] >> 16) & 0xff;
@@ -320,6 +334,32 @@ static eStatus handle_rendering(uint8_t status) {
         return RETURN_TRUE;
     }
 
+    if(render_state==RENDER_STATE_CLEAR_SCREEN) {
+        if(status & 0x02) {
+            uint16_t size = 0;
+            tRendererColor color;
+            color.alpha=0xff;
+            color.blue=0;
+            color.green=0;
+            color.red=0;
+            vc_cmd_rect_color(0, 0, 1024, 600, color, command_queue, MAX_QUEUE_LENGTH, &size);
+            uint8_t prefix[1] = {0x01};
+            video_core_hw_send(prefix, 1, command_queue, size);
+            render_state=RENDER_STATE_CLEAR_SCREEN_WAIT;
+            return RETURN_TRUE;
+        }
+        return RETURN_FALSE;
+    }
+
+    if(render_state==RENDER_STATE_CLEAR_SCREEN_WAIT) {
+        // ready?
+        if(status & 0x02) {
+            render_state=RENDER_STATE_START;
+            return RETURN_TRUE;
+        }
+        return RETURN_FALSE;
+    }
+
     if (render_state == RENDER_STATE_UPLOAD_TEXTURE) {
         if (!texture_request.finished)
             return RETURN_FALSE;
@@ -330,7 +370,7 @@ static eStatus handle_rendering(uint8_t status) {
         return RETURN_FALSE;
 
     if (status & 0x02) {
-        uint16_t size=0;
+        uint16_t size = 0;
         renderer_update_display(
                 command_queue,
                 MAX_QUEUE_LENGTH,

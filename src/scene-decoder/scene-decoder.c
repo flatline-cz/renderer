@@ -200,6 +200,7 @@ static bool decode_tiles(bool custom) {
         if (!input_get_byte(custom, &visible))
             return false;
         tile->tile_visible = visible == 1;
+        tile->parent_visible = true;
 
         // update rendering position
         tile->position_right = tile->position_left + tile->position_width - 1;
@@ -235,10 +236,6 @@ static bool decode_tiles(bool custom) {
             if (!decode_texture(custom, &tile->texture))
                 return false;
         }
-
-        // FIXME: decode tile visual properties
-        tile->overlapping_children = false;
-        tile->parent_visible = true;
     }
 
     TRACE("- Decoded %d tiles", renderer_tiles_count)

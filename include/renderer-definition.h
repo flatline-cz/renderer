@@ -50,7 +50,10 @@ typedef struct tRendererTile {
     tRendererTileHandle root_tile;
     uint16_t children_list_index;
     uint16_t children_count;
-    bool overlapping_children;
+    uint8_t gauge_marks_count;
+
+    bool changed;
+
 
     // visibility
     bool tile_visible;
