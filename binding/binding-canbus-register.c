@@ -9,7 +9,7 @@ typedef struct tagRegistrant {
     void *arg;
 } tagRegistrant;
 
-#define MAX_REGISTRANTS     16
+#define MAX_REGISTRANTS     64
 
 static tagRegistrant registrants[MAX_REGISTRANTS];
 

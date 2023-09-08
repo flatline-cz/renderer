@@ -16,4 +16,6 @@ bool scene_decoder_decode(bool custom);
 
 bool scene_decoder_use_default();
 
+void scene_default_init();
+
 #endif //HEAD_UNIT_SCENE_DECODER_H

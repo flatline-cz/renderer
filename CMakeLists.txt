@@ -11,6 +11,8 @@ set(RENDERER_SOURCES
         ${CMAKE_CURRENT_LIST_DIR}/src/video-core/video-core.c
         ${CMAKE_CURRENT_LIST_DIR}/src/video-core/data-upload.c
         ${CMAKE_CURRENT_LIST_DIR}/src/scene-decoder/scene-decoder.c
+        ${CMAKE_CURRENT_LIST_DIR}/default-scene/code/scene-default.c
+        ${CMAKE_CURRENT_LIST_DIR}/default-scene/code/dashboard-definition.c
         ${CMAKE_BINARY_DIR}/fpga-bit-stream.c
 )
 
