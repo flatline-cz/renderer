@@ -45,9 +45,23 @@ bool binding_canbus_handle(tCANMessage *msg) {
 
         // TODO: process sign
 
-        // FIXME: do the type mapping
-        field->type = 0;
-        field->boolean = field_value != 0;
+        // do the type mapping
+        switch (field_def->type) {
+            case CANBUS_FIELD_BOOLEAN:
+            default:
+                field->type = 0;
+                field->boolean = field_value != 0;
+                break;
+            case CANBUS_FIELD_INTEGER:
+                field->type = 1;
+                field->integer = ((int32_t) field_value) + field_def->integer_offset;
+                break;
+            case CANBUS_FIELD_FLOAT:
+                field->type = 2;
+                field->real = ((float) ((int32_t) field_value)) * field_def->float_scale + field_def->float_offset;
+                break;
+
+        }
 
         // next field
         field_def++;

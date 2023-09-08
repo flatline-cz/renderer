@@ -18,10 +18,26 @@ typedef struct tagBindingCANBUSDefBitSplice {
 
 extern const tBindingCANBUSDefBitSplice binding_canbus_bit_splices[];
 
+typedef enum tagBindingCANBUSType {
+    CANBUS_FIELD_BOOLEAN,
+    CANBUS_FIELD_INTEGER,
+    CANBUS_FIELD_FLOAT,
+} eBindingCANBUSType;
+
 typedef struct tagBindingCANBUSDefField {
     uint16_t first_bit_splice;
     uint8_t bit_splices;
     int8_t sign_bits;
+    eBindingCANBUSType type;
+    union {
+        struct {
+            int32_t integer_offset;
+        };
+        struct {
+            float float_offset;
+            float float_scale;
+        };
+    };
 } tBindingCANBUSDefField;
 
 extern const tBindingCANBUSDefField binding_canbus_fields[];
