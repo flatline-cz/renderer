@@ -352,7 +352,7 @@ static void vc_cmd_rect_texture(tRendererPosition left,
                   buffer, max_length, length);
 
 
-    buffer[(*length)++] = 0x01 | ((texture->stripe_length & 0x0300) >> 8);
+    buffer[(*length)++] = 0x01 | ((texture->stripe_length & 0x0300) >> 2);
     buffer[(*length)++] = texture->stripe_length & 0xff;
 
     uint32_t base = texture->base;
