@@ -159,7 +159,9 @@ static bool decode_texture(bool custom, tRendererTexture *tex) {
     if (texture_compression >= 2)
         return false;
     tex->packed_alpha = (texture_compression == 1);
+#ifdef TRACE_DECODER_DETAILS
     TRACE("-- Decoded texture at 0x%08X", tex->base)
+#endif
     return true;
 }
 
@@ -459,8 +461,10 @@ static bool decode_texture_bundles(bool custom) {
 
         if (!input_get_dword(custom, &renderer_graphics[i].length))
             return false;
+#ifdef TRACE_DECODER_DETAILS
         TRACE("-- Decoded bundle #%d addr=0x%08X, length=0x%08X", i,
               renderer_graphics[i].base, renderer_graphics[i].length)
+#endif
     }
 
     TRACE("- Decoded %d texture bundles", renderer_graphics_count)

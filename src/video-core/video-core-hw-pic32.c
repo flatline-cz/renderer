@@ -10,6 +10,7 @@
 #include "pic32/pic32mz-regs.h"
 #include "pic32/pic32mz-int.h"
 #include "profile.h"
+#include "trace.h"
 
 
 #define SPI_CLOCK_LIMIT         10
@@ -187,6 +188,7 @@ bool video_core_hw_handle() {
         if (timeout > TIME_GET)
             return false;
 
+        TRACE("FPGA code uploading (%d bytes)", FPGA_bit_stream_len+13)
         state = STATE_CODE_UPLOAD;
         spi_xchg((uint8_t*)FPGA_bit_stream, NULL, FPGA_bit_stream_len+13);
 //        start_DMA_transfer(FPGA_bit_stream, FPGA_bit_stream_len + 13);
@@ -195,6 +197,7 @@ bool video_core_hw_handle() {
 
     // uploading code?
     if (state == STATE_CODE_UPLOAD) {
+        TRACE("FPGA code uploaded")
 //        if (!is_DMA_transfer_finished())
 //            return false;
         state = STATE_CODE_UPLOADED;

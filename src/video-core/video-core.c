@@ -330,6 +330,7 @@ static eStatus handle_rendering(uint8_t status) {
         texture_request.target_addr = 0;
         texture_request.length = current_rendering_context->length;
         render_state = RENDER_STATE_UPLOAD_TEXTURE;
+        TRACE("Texture upload (%d bytes)", texture_request.length)
         upload_data_start(&texture_request);
         return RETURN_TRUE;
     }
@@ -346,6 +347,7 @@ static eStatus handle_rendering(uint8_t status) {
             uint8_t prefix[1] = {0x01};
             video_core_hw_send(prefix, 1, command_queue, size);
             render_state=RENDER_STATE_CLEAR_SCREEN_WAIT;
+            TRACE("Initial screen clearing")
             return RETURN_TRUE;
         }
         return RETURN_FALSE;
@@ -355,6 +357,7 @@ static eStatus handle_rendering(uint8_t status) {
         // ready?
         if(status & 0x02) {
             render_state=RENDER_STATE_START;
+            TRACE("Initial screen clearing done")
             return RETURN_TRUE;
         }
         return RETURN_FALSE;
@@ -363,6 +366,7 @@ static eStatus handle_rendering(uint8_t status) {
     if (render_state == RENDER_STATE_UPLOAD_TEXTURE) {
         if (!texture_request.finished)
             return RETURN_FALSE;
+        TRACE("Rendering started")
         render_state = RENDER_STATE_RENDERING;
     }
 
