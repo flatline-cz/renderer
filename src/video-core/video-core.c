@@ -4,7 +4,7 @@
 #include <profile.h>
 #include <renderer.h>
 #include <video-core.h>
-#include <video-core-hw.h>
+#include <spi-vc.h>
 #include <spi-flash.h>
 #include "system-config.h"
 #include "trace.h"
@@ -159,47 +159,47 @@ static uint8_t command_queue[MAX_QUEUE_LENGTH];
 static uint8_t query_status_buffer[3];
 
 static uint8_t query_status() {
-    if (!video_core_hw_idle())
+    if (!spi_vc_idle())
         return 0;
     query_status_buffer[0] = 0;
     query_status_buffer[1] = 0xff;
     query_status_buffer[2] = 0xff;
-    video_core_hw_exchange(query_status_buffer, query_status_buffer, 3);
+    spi_vc_exchange(query_status_buffer, query_status_buffer, 3);
     return query_status_buffer[2];
 }
 
 static uint8_t set_mode_buffer[2];
 
 static void set_mode(uint8_t mode) {
-    if (!video_core_hw_idle())
+    if (!spi_vc_idle())
         return;
     set_mode_buffer[0] = 4;
     set_mode_buffer[1] = mode;
-    video_core_hw_send(set_mode_buffer, 2, NULL, 0);
+    spi_vc_exchange(set_mode_buffer, NULL, 2);
 }
 
 static uint8_t upload_data_buffer[4];
 
 static void upload_data(uint8_t *data, uint32_t offset, uint32_t length) {
-    if (!video_core_hw_idle())
+    if (!spi_vc_idle())
         return;
     upload_data_buffer[0] = 0x02;
     upload_data_buffer[1] = (offset >> 16) & 0xff;
     upload_data_buffer[2] = (offset >> 8) & 0xff;
     upload_data_buffer[3] = (offset >> 0) & 0xff;
-    video_core_hw_send(upload_data_buffer, 4, data, length);
+    spi_vc_exchange(upload_data_buffer, NULL, 4);
 }
 
 static uint8_t set_video_frame_buffer[4];
 
 static void set_video_frame() {
-    if (!video_core_hw_idle())
+    if (!spi_vc_idle())
         return;
     set_video_frame_buffer[0] = 0x03;
     set_video_frame_buffer[1] = (video_descriptor->frame_offsets[video_frame] >> 16) & 0xff;
     set_video_frame_buffer[2] = (video_descriptor->frame_offsets[video_frame] >> 8) & 0xff;
     set_video_frame_buffer[3] = (video_descriptor->frame_offsets[video_frame] >> 0) & 0xff;
-    video_core_hw_send(set_video_frame_buffer, 4, NULL, 0);
+    spi_vc_exchange(set_video_frame_buffer, NULL, 4);
 }
 
 typedef enum tagStatus {
@@ -325,7 +325,7 @@ static eStatus handle_rendering(uint8_t status) {
         // upload texture
         current_rendering_context = target_rendering_context;
         texture_request.uploadDataRoutine = upload_data;
-        texture_request.updateFinishedRoutine = video_core_hw_idle;
+        texture_request.updateFinishedRoutine = spi_vc_idle;
         texture_request.source_addr = current_rendering_context->base;
         texture_request.target_addr = 0;
         texture_request.length = current_rendering_context->length;
@@ -345,7 +345,7 @@ static eStatus handle_rendering(uint8_t status) {
             color.red=0;
             vc_cmd_rect_color(0, 0, 1024, 600, color, command_queue, MAX_QUEUE_LENGTH, &size);
             uint8_t prefix[1] = {0x01};
-            video_core_hw_send(prefix, 1, command_queue, size);
+            spi_vc_send(prefix, 1, command_queue, size);
             render_state=RENDER_STATE_CLEAR_SCREEN_WAIT;
             TRACE("Initial screen clearing")
             return RETURN_TRUE;
@@ -381,7 +381,7 @@ static eStatus handle_rendering(uint8_t status) {
                 &size);
         if (size) {
             uint8_t prefix[1] = {0x01};
-            video_core_hw_send(prefix, 1, command_queue, size);
+            spi_vc_send(prefix, 1, command_queue, size);
             last_rendering = TIME_GET;
             return RETURN_TRUE;
         }
@@ -415,7 +415,7 @@ static eStatus handle_playback(uint8_t status) {
     frame[1] = (video_descriptor->frame_offsets[video_frame] >> 16) & 0xff;
     frame[2] = (video_descriptor->frame_offsets[video_frame] >> 8) & 0xff;
     frame[3] = (video_descriptor->frame_offsets[video_frame] >> 0) & 0xff;
-    video_core_hw_send(NULL, 0, frame, 4);
+    spi_vc_exchange(frame, NULL, 4);
     last_rendering = TIME_GET;
     video_frame++;
 
@@ -423,7 +423,7 @@ static eStatus handle_playback(uint8_t status) {
 }
 
 bool vc_handle() {
-    if (!video_core_hw_idle())
+    if (!spi_vc_idle())
         return false;
     upload_data_handle();
     // polling?

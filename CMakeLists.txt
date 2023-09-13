@@ -43,9 +43,7 @@ set(FPGA_SOURCES
 
 if (DEFINED PIC32)
     # C sources
-    list(APPEND RENDERER_SOURCES
-            ${CMAKE_CURRENT_LIST_DIR}/src/video-core/video-core-hw-pic32.c
-    )
+
     # FPGA properties
     set(FPGA_PCF_FILE ${CMAKE_CURRENT_LIST_DIR}/fpga/design/constraints/Final.pcf)
     set(FPGA_CHIP "hx4k")
@@ -57,9 +55,7 @@ if (DEFINED PIC32)
     )
 else ()
     # C sources
-    list(APPEND RENDERER_SOURCES
-            ${CMAKE_CURRENT_LIST_DIR}/src/video-core/video-core-hw-linux.c
-    )
+
     # FPGA properties
     set(FPGA_PCF_FILE ${CMAKE_CURRENT_LIST_DIR}/fpga/design/constraints/Prototype2.pcf)
     set(FPGA_CHIP "hx8k")
