@@ -1,0 +1,55 @@
+==== 1st version ===
+0.000s : Decoding started
+0.000s : - Decoding color table
+0.000s : - Decoded 10 colors
+0.000s : - Decoding tiles
+0.000s : - Decoded 231 tiles
+0.000s : - Decoding screens
+0.000s : - Decoded 1 screens
+0.000s : - Decoding tile tree
+0.000s : - Decoded 230 records
+0.000s : - Decoding font glyphs
+0.000s : - Decoded 91 font glyphs
+0.000s : - Decoding fonts
+0.000s : - Decoded 9 fonts
+0.000s : - Decoding texts
+0.000s : - Decoded 9 texts
+0.000s : - Decoding texture bundles
+0.000s : - Decoded 1 texture bundles
+0.000s : Decoding finished, memory used = 12773 bytes
+0.000s : Started
+0.050s : FPGA code uploading (135113bytes)
+0.390s : FPGA code uploaded
+0.412s : Initial screen clearing
+0.552s : Initial screen clearing done
+0.562s : Texture upload (292452 bytes)
+1.495s : Rendering started
+
+==== 2nd version ====
+0.000s : SPI-FLASH: Initialized
+0.000s : Decoding started
+0.000s : - Decoding color table
+0.000s : - Decoded 10 colors
+0.000s : - Decoding tiles
+0.000s : - Decoded 231 tiles
+0.000s : - Decoding screens
+0.000s : - Decoded 1 screens
+0.000s : - Decoding tile tree
+0.000s : - Decoded 230 records
+0.000s : - Decoding font glyphs
+0.000s : - Decoded 91 font glyphs
+0.000s : - Decoding fonts
+0.000s : - Decoded 9 fonts
+0.000s : - Decoding texts
+0.000s : - Decoded 9 texts
+0.000s : - Decoding texture bundles
+0.000s : - Decoded 1 texture bundles
+0.000s : Decoding finished, memory used = 12773 bytes
+0.000s : Started
+0.050s : FPGA code uploading (135113 bytes)
+0.160s : FPGA code uploaded
+0.163s : FPGA ready
+0.203s : Initial screen clearing
+0.243s : Initial screen clearing done
+0.263s : Texture upload (292452 bytes)
+1.116s : Rendering started

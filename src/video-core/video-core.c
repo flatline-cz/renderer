@@ -5,11 +5,8 @@
 #include <renderer.h>
 #include <video-core.h>
 #include <spi-vc.h>
-#include <spi-flash.h>
-#include "system-config.h"
 #include "trace.h"
 #include "data-upload.h"
-#include "scene-decoder.h"
 
 // *******************************************
 // **  VIDEO CORE POLL CONTEXT              **
@@ -187,7 +184,7 @@ static void upload_data(uint8_t *data, uint32_t offset, uint32_t length) {
     upload_data_buffer[1] = (offset >> 16) & 0xff;
     upload_data_buffer[2] = (offset >> 8) & 0xff;
     upload_data_buffer[3] = (offset >> 0) & 0xff;
-    spi_vc_exchange(upload_data_buffer, NULL, 4);
+    spi_vc_send(upload_data_buffer, 4, data, length);
 }
 
 static uint8_t set_video_frame_buffer[4];
