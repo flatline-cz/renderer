@@ -29,6 +29,7 @@ uint16_t renderer_texts_count;
 tRendererTile *renderer_tiles;
 uint16_t renderer_tiles_count;
 tRendererTileHandle *renderer_child_index;
+uint16_t renderer_child_index_count;
 tRendererScreen *renderer_screens;
 uint16_t renderer_screen_count;
 tRendererVideoDescriptor *renderer_videos;
@@ -251,6 +252,11 @@ static bool decode_screens(bool custom) {
     if (!input_get_word(custom, &renderer_screen_count))
         return false;
 
+    if (renderer_screen_count != 1) {
+        TRACE("-- Invalid number of screens %d", renderer_screen_count)
+        return false;
+    }
+
     // allocate memory
     renderer_screens = allocate(sizeof(tRendererScreen) * renderer_screen_count, 2);
 
@@ -272,21 +278,20 @@ static bool decode_child_index(bool custom) {
     TRACE("- Decoding tile tree")
 
     // index records
-    uint16_t count;
-    if (!input_get_word(custom, &count))
+    if (!input_get_word(custom, &renderer_child_index_count))
         return false;
 
     // allocate memory
-    renderer_child_index = allocate(count * 2, 2);
+    renderer_child_index = allocate(renderer_child_index_count * 2, 2);
 
     // fill index
     int i;
-    for (i = 0; i < count; i++) {
+    for (i = 0; i < renderer_child_index_count; i++) {
         if (!input_get_word(custom, renderer_child_index + i))
             return false;
     }
 
-    TRACE("- Decoded %d records", count)
+    TRACE("- Decoded %d records", renderer_child_index_count)
 
     return true;
 }

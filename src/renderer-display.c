@@ -5,19 +5,25 @@
 #include <renderer-scene.h>
 #include <video-core.h>
 #include "memcpy.h"
+#include "trace.h"
 
 extern tRendererTileHandle root_tile;
 
-// FIXME: allocate memory
-static uint8_t tile_cache_mem[8 * 1024];
+// allocate memory
+static uint8_t tile_cache_mem[16 * 1024];
 
 // a local copy of graphics scene as it was last rendered
 // used for detecting the changes as only these are actually rendered
 typedef struct tVideoBuffer {
     bool not_rendered_at_all;
-    tRendererTile tile_cache[300];
+    tRendererTile *tile_cache;
 } tVideoBuffer;
 static tVideoBuffer buffer;
+
+
+static tTime refresh_timer;
+#define REFRESH_TIMER           250
+
 
 tRendererTileHandle root_tile;
 tRendererGraphicsHandle graphics_handle;
@@ -25,20 +31,16 @@ tRendererGraphicsHandle graphics_handle;
 
 static void update_tile_cache();
 
-// VideoCore commands & buffer
-#define VIDEO_CORE_BUFFER_SIZE           (8*1024)
-static uint8_t video_buffer[VIDEO_CORE_BUFFER_SIZE];
-static unsigned video_buffer_length;
 
 
 void vc_cmd_rect_color(tRendererPosition left,
-                              tRendererPosition top,
-                              tRendererPosition width,
-                              tRendererPosition height,
-                              tRendererColor color,
-                              uint8_t *buffer,
-                              uint16_t max_length,
-                              uint16_t *length);
+                       tRendererPosition top,
+                       tRendererPosition width,
+                       tRendererPosition height,
+                       tRendererColor color,
+                       uint8_t *buffer,
+                       uint16_t max_length,
+                       uint16_t *length);
 
 static void vc_cmd_rect_texture(tRendererPosition left,
                                 tRendererPosition top,
@@ -67,8 +69,10 @@ typedef struct tRedrawList {
 } tRedrawList;
 
 void renderer_init() {
-    root_tile=RENDERER_NULL_HANDLE;
-    graphics_handle=RENDERER_NULL_HANDLE;
+    root_tile = RENDERER_NULL_HANDLE;
+    graphics_handle = RENDERER_NULL_HANDLE;
+    buffer.tile_cache = (tRendererTile *) tile_cache_mem;
+    refresh_timer = 0;
 }
 
 static void compute_area_to_redraw(tVideoBuffer *buffer,
@@ -286,7 +290,12 @@ void renderer_update_display(uint8_t *queue_data, uint16_t queue_max_length,
 
 static void update_tile_cache() {
     memcpy(&buffer.tile_cache, renderer_tiles, sizeof(tRendererTile) * renderer_tiles_count);
-    buffer.not_rendered_at_all = false;
+    if (refresh_timer < TIME_GET) {
+        refresh_timer = TIME_GET + REFRESH_TIMER;
+        buffer.not_rendered_at_all = true;
+    } else {
+        buffer.not_rendered_at_all = false;
+    }
 }
 
 static void vc_cmd_common(tRendererPosition left,
@@ -321,13 +330,13 @@ static void vc_cmd_color(tRendererColor color,
 }
 
 void vc_cmd_rect_color(tRendererPosition left,
-                              tRendererPosition top,
-                              tRendererPosition width,
-                              tRendererPosition height,
-                              tRendererColor color,
-                              uint8_t *buffer,
-                              uint16_t max_length,
-                              uint16_t *length) {
+                       tRendererPosition top,
+                       tRendererPosition width,
+                       tRendererPosition height,
+                       tRendererColor color,
+                       uint8_t *buffer,
+                       uint16_t max_length,
+                       uint16_t *length) {
     vc_cmd_common(left, top, width, height,
                   buffer, max_length, length);
 
@@ -367,11 +376,18 @@ static void vc_cmd_rect_texture(tRendererPosition left,
 }
 
 void renderer_show_screen(tRendererScreenHandle screen_handle) {
-    if (screen_handle >= renderer_screen_count)
+    if (screen_handle >= renderer_screen_count) {
+        TRACE("RendererShowScreen: Invalid screen handle %d", screen_handle)
         return;
+    }
 
     // screen definition
     tRendererScreen *screen = renderer_screens + screen_handle;
+
+    if (screen->root_tile >= renderer_tiles_count) {
+        TRACE("RendererShowScreen: Invalid root tile handle %d", screen->root_tile)
+        return;
+    }
 
     // graphics changes?
     if (graphics_handle != screen->graphics) {

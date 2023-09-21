@@ -10,16 +10,32 @@ static inline tRendererColor map_color(tRendererColorHandle handle);
 
 
 static void propagate_visibility(tRendererTileHandle tile_handle, bool visible) {
+    if (tile_handle >= renderer_tiles_count) {
+        TRACE("PropagateVisibility: Invalid tile handle %d", tile_handle)
+        return;
+    }
     unsigned i, count;
     tRendererTile *tile = renderer_tiles + tile_handle;
+    if (tile->children_list_index + tile->children_count > renderer_child_index_count) {
+        TRACE("PropagateVisibility: Inconsistent tile children index for tile %d", tile_handle)
+        return;
+    }
     const tRendererTileHandle *children = renderer_child_index + tile->children_list_index;
     for (i = 0, count = tile->children_count; i < count; i++, children++) {
+        if (*children >= renderer_tiles_count) {
+            TRACE("PropagateVisibility: Invalid child tile handle %d", *children)
+            continue;
+        }
         renderer_tiles[*children].parent_visible = visible;
         propagate_visibility(*children, visible && renderer_tiles[*children].tile_visible);
     }
 }
 
 void renderer_set_visibility(tRendererTileHandle tile, bool visible) {
+    if (tile >= renderer_tiles_count) {
+        TRACE("RendererSetVisibility: Invalid tile handle %d", tile)
+        return;
+    }
     if (renderer_tiles[tile].tile_visible == visible)
         return;
     renderer_tiles[tile].tile_visible = visible;
@@ -28,6 +44,10 @@ void renderer_set_visibility(tRendererTileHandle tile, bool visible) {
 
 void renderer_set_position(tRendererTileHandle tile_handle,
                            tRendererPosition left, tRendererPosition top) {
+    if (tile_handle >= renderer_tiles_count) {
+        TRACE("RendererSetPosition: Invalid tile handle %d", tile_handle)
+        return;
+    }
     register tRendererTile *tile = renderer_tiles + tile_handle;
     tile->position_left = left;
     tile->position_right = left + tile->position_width - 1;
@@ -36,6 +56,14 @@ void renderer_set_position(tRendererTileHandle tile_handle,
 }
 
 void renderer_set_color(tRendererTileHandle tile, tRendererColorHandle color) {
+    if (tile >= renderer_tiles_count) {
+        TRACE("RendererSetColor: Invalid tile handle %d", tile)
+        return;
+    }
+    if (color >= renderer_colors_simple_count) {
+        TRACE("RendererSetColor: Invalid color handle %d", color)
+        return;
+    }
     renderer_tiles[tile].color_handle = color;
     renderer_tiles[tile].color = map_color(color);
 }
@@ -61,8 +89,8 @@ static uint32_t utf_nextchar(const char *s, unsigned *i) {
 }
 
 void renderer_set_text(tRendererTileHandle tile_handle, const char *text) {
-    if(tile_handle>=renderer_texts_count) {
-        TRACE("renderer_set_text: Invalid text handle");
+    if (tile_handle >= renderer_texts_count) {
+        TRACE("renderer_set_text: Invalid text handle %d", tile_handle);
         return;
     }
 

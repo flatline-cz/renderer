@@ -147,6 +147,7 @@ extern tRendererTile *renderer_tiles;
 extern uint16_t renderer_tiles_count;
 
 extern tRendererTileHandle *renderer_child_index;
+extern uint16_t renderer_child_index_count;
 
 extern tRendererScreen *renderer_screens;
 extern uint16_t renderer_screen_count;

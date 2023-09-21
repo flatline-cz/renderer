@@ -450,7 +450,6 @@ bool vc_handle() {
     }
 
     // mode is ok
-
     switch (current_mode) {
         case NORMAL:
             ret = handle_rendering(status);
